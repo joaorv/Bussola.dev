@@ -1,0 +1,14 @@
+// Schema do Prisma - Bússola.dev
+// Documentação: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelos das entidades (usuários, roadmap, etapas, conteúdo regional)
+// serão adicionados aqui conforme o desenvolvimento avança.
