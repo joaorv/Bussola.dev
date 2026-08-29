@@ -1,2 +1,2 @@
 # Bussola.dev
-Projeto da ESW238DESENVOLVIMENTO DE SOFTWARE PARA WEB
+Projeto Web
