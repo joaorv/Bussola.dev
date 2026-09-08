@@ -1,26 +1,81 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Base — "tinta do mapa" */
+  --color-canvas: #F7F8FA;      /* fundo da página, papel de carta náutica */
+  --color-surface: #FFFFFF;     /* cards, painéis */
+  --color-ink-900: #14213D;     /* texto principal */
+  --color-ink-700: #38455C;     /* texto secundário */
+  --color-ink-500: #64748B;     /* texto terciário, ícones */
+  --color-ink-300: #CBD2DE;     /* bordas, divisores */
+  --color-ink-100: #EEF1F6;     /* hover sutil, fundo alternado */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Marca — azul-marinho, confiança/tecnologia */
+  --color-brand: #1B3A6B;
+  --color-brand-hover: #2E5AA0;
+  --color-brand-active: #10233F;
+
+  /* Destaque — "agulha da bússola", usado com moderação em CTAs */
+  --color-accent: #E4572E;
+  --color-accent-hover: #F27F52;
+  --color-accent-active: #B8431F;
+
+  /* Progresso — "trilha", etapas concluídas no roadmap */
+  --color-success: #1F9E7C;
+  --color-success-hover: #4CC1A1;
+  --color-success-active: #146651;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-canvas: #0B1220;
+    --color-surface: #121B2E;
+    --color-ink-900: #EDF1F7;
+    --color-ink-700: #C3CCDA;
+    --color-ink-500: #8996AC;
+    --color-ink-300: #2A3548;
+    --color-ink-100: #1A2438;
+
+    --color-brand: #4E7FCB;
+    --color-brand-hover: #6D9AE0;
+    --color-brand-active: #3A66AC;
   }
 }
 
+@theme inline {
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink-900);
+  --color-surface: var(--color-surface);
+  --color-muted: var(--color-ink-500);
+  --color-border: var(--color-ink-300);
+
+  --color-brand: var(--color-brand);
+  --color-brand-hover: var(--color-brand-hover);
+  --color-brand-active: var(--color-brand-active);
+
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-active: var(--color-accent-active);
+
+  --color-success: var(--color-success);
+  --color-success-hover: var(--color-success-hover);
+  --color-success-active: var(--color-success-active);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --spacing-gutter: 1.25rem;
+  --spacing-card: 1.5rem;
+  --spacing-section: 5rem;
+  --spacing-section-sm: 3rem;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
