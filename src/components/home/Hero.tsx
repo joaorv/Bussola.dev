@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { LAUNCH_DATE } from "@/lib/launch";
 import { CompassRose } from "./CompassRose";
+import { Countdown } from "./Countdown";
 
 export function Hero() {
   return (
@@ -28,6 +30,12 @@ export function Hero() {
           >
             Entrar na lista de espera
           </Link>
+
+          <Countdown
+            target={LAUNCH_DATE}
+            label="Faltam para o lançamento"
+            className="mt-12"
+          />
         </div>
 
         <div className="relative flex min-w-0 justify-center lg:justify-end">

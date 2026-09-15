@@ -30,6 +30,7 @@
      o modo claro/escuro. */
   --color-night: #14213D;
   --color-night-deep: #0C1428;
+  --color-night-soft: #1D3866; /* cards/caixas sobre a faixa escura */
   --color-night-line: #2A3F66;
 }
 
@@ -70,6 +71,7 @@
 
   --color-night: var(--color-night);
   --color-night-deep: var(--color-night-deep);
+  --color-night-soft: var(--color-night-soft);
   --color-night-line: var(--color-night-line);
 
   --font-sans: var(--font-geist-sans);
