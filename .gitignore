@@ -32,8 +32,6 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-# o .example não tem segredo nenhum: é a documentação das variáveis
-!.env.example
 
 # vercel
 .vercel
