@@ -7,9 +7,28 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+const body = await request.json();
 
-    const { nome, email, areaInteresse } = body;
+if (
+  !body ||
+  typeof body !== "object" ||
+  Array.isArray(body) ||
+  typeof body.nome !== "string" ||
+  typeof body.email !== "string" ||
+  typeof body.areaInteresse !== "string" ||
+  !body.nome.trim() ||
+  !body.email.trim() ||
+  !body.areaInteresse.trim()
+) {
+  return NextResponse.json(
+    { error: "Dados inválidos" },
+    { status: 400 }
+  );
+}
+
+const nome = body.nome.trim();
+const email = body.email.trim();
+const areaInteresse = body.areaInteresse.trim();
 
     const lead = await prisma.lead.create({
       data: {
