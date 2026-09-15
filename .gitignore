@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local
 
 # vercel
 .vercel
@@ -40,6 +41,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Prisma generated client
+/src/generated/
 # instruções para agentes de IA, geradas pelo Next a cada "next dev"
 AGENTS.md
 CLAUDE.md
