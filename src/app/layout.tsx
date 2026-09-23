@@ -21,8 +21,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // data-scroll-behavior avisa o Next do scroll suave definido no CSS: ele
+    // desliga o efeito durante troca de rota (onde seria estranho) e mantém
+    // nos links de âncora da mesma página.
     <html
       lang="pt-BR"
+      data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">

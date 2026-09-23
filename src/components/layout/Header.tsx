@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { CompassIcon } from "./CompassIcon";
 
+// "/#..." e não "#...": o cabeçalho aparece em todas as páginas, então o link
+// precisa voltar para a home antes de rolar até a seção.
 const NAV_LINKS = [
   { href: "/trilhas", label: "Trilhas" },
-  { href: "/sobre", label: "Sobre" },
+  { href: "/#como-funciona", label: "Como funciona" },
 ];
 
 export function Header() {
