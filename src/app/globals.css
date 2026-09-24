@@ -93,6 +93,15 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Links de âncora (menu -> "Como funciona", CTA -> lista de espera) deslizam
+   até a seção em vez de teleportar. Fica dentro de no-preference porque para
+   quem pede menos animação o salto imediato é o comportamento correto. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 /* --- Arte da bússola (hero) --------------------------------------------
    Movimento discreto: a rosa flutua e a agulha oscila como se procurasse
    o norte. Puro enfeite — desligado para quem pede menos animação. */

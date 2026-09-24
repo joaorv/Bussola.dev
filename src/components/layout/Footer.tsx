@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CompassIcon } from "./CompassIcon";
 
 const FOOTER_LINKS = [
-  { href: "/sobre", label: "Sobre" },
+  { href: "/#como-funciona", label: "Como funciona" },
   { href: "/trilhas", label: "Trilhas" },
   { href: "/contato", label: "Contato" },
 ];

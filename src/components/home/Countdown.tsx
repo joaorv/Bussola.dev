@@ -68,10 +68,10 @@ export function Countdown({ target, label, className }: CountdownProps) {
         {remaining ? describe(remaining) : "Carregando a contagem regressiva."}
       </span>
 
-      <div aria-hidden="true" className="mt-4 flex gap-3 sm:gap-4">
+      <div aria-hidden="true" className="mt-4 flex gap-2 sm:gap-4">
         {UNITS.map(({ key, label: unitLabel }) => (
           <div key={key} className="flex flex-col items-center gap-2">
-            <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-night-soft text-2xl font-semibold text-white tabular-nums ring-1 ring-night-line sm:h-[4.5rem] sm:w-[4.5rem] sm:text-3xl">
+            <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-night-soft text-xl font-semibold text-white tabular-nums ring-1 ring-night-line sm:h-[4.5rem] sm:w-[4.5rem] sm:text-3xl">
               {remaining ? String(remaining[key]).padStart(2, "0") : "--"}
             </span>
             <span className="text-[0.65rem] font-medium tracking-widest text-white/50 uppercase">
