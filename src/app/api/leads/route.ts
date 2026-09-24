@@ -1,49 +1,18 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-
-const areasPredefinidas = [
-  "Desenvolvimento Web",
-  "Desenvolvimento Mobile",
-  "Backend",
-  "Frontend",
-  "Banco de Dados",
-  "DevOps",
-  "Dados e IA",
-  "Segurança",
-] as const;
+import { Prisma } from "@/generated/prisma/client";
+import { ratelimit } from "@/lib/rate-limit";
+import {
+  areaInteresseSchema,
+  emailSchema,
+  nomeSchema,
+} from "@/lib/lead-validation";
 
 const leadSchema = z.object({
-  nome: z
-    .string()
-    .trim()
-    .min(2, "Nome muito curto")
-    .max(100, "Nome muito longo")
-    .regex(
-      /^[\p{L}\p{M}]+(?:[ '-][\p{L}\p{M}]+)*$/u,
-      "Nome inválido"
-    ),
-
-  email: z
-    .string()
-    .trim()
-    .email("E-mail inválido")
-    .max(254, "E-mail muito longo")
-    .transform((valor) => valor.toLowerCase()),
-
-  areaInteresse: z
-    .string()
-    .trim()
-    .min(2, "Área de interesse inválida")
-    .max(100, "Área de interesse muito longa")
-    .refine(
-      (valor) =>
-        areasPredefinidas.includes(
-          valor as (typeof areasPredefinidas)[number]
-        ) ||
-        /^[\p{L}\p{M}0-9][\p{L}\p{M}0-9 .+#&/'-]*$/u.test(valor),
-      "Área de interesse inválida"
-    ),
+  nome: nomeSchema,
+  email: emailSchema,
+  areaInteresse: areaInteresseSchema,
 });
 
 export async function GET() {
@@ -55,6 +24,18 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ip = forwardedFor?.split(",")[0]?.trim() ?? "unknown";
+
+    const { success } = await ratelimit.limit(ip);
+
+    if (!success) {
+      return NextResponse.json(
+        { error: "Muitas requisições. Tente novamente mais tarde." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
 
     if (body?.website) {
@@ -67,10 +48,20 @@ export async function POST(request: Request) {
     const resultado = leadSchema.safeParse(body);
 
     if (!resultado.success) {
+      const erros: Record<string, string> = {};
+
+      for (const issue of resultado.error.issues) {
+        const campo = issue.path[0];
+
+        if (typeof campo === "string" && !erros[campo]) {
+          erros[campo] = issue.message;
+        }
+      }
+
       return NextResponse.json(
         {
           error: "Dados inválidos",
-          detalhes: resultado.error.issues,
+          erros,
         },
         { status: 400 }
       );
@@ -91,13 +82,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const lead = await prisma.lead.create({
-      data: {
-        nome,
-        email,
-        areaInteresse,
-      },
-    });
+    let lead;
+
+    try {
+      lead = await prisma.lead.create({
+        data: {
+          nome,
+          email,
+          areaInteresse,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return NextResponse.json(
+          { error: "Este e-mail já está cadastrado." },
+          { status: 409 }
+        );
+      }
+
+      throw error;
+    }
 
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {

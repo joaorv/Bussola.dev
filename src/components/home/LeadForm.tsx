@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import {
+    areaInteresseSchema,
+    emailSchema,
+    nomeSchema,
+} from "@/lib/lead-validation";
 
 type Erros = {
     nome: string;
@@ -47,22 +52,20 @@ export function LeadForm() {
         const novosErros: Erros = { ...errosVazios };
 
         // Nome
+        const resultadoNome = nomeSchema.safeParse(nome);
+
         if (!nome.trim()) {
             novosErros.nome = "Digite seu nome.";
-        } else if (nome.trim().length < 2) {
-            novosErros.nome = "Nome muito curto.";
-        } else if (
-            !/^[\p{L}\p{M}]+(?:[ '-][\p{L}\p{M}]+)*$/u.test(nome.trim())
-        ) {
-            novosErros.nome = "Nome inválido.";
+        } else if (!resultadoNome.success) {
+            novosErros.nome = resultadoNome.error.issues[0].message;
         }
 
         // E-mail
+        const resultadoEmail = emailSchema.safeParse(email);
+
         if (!email.trim()) {
             novosErros.email = "Digite seu e-mail.";
-        } else if (
-            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-        ) {
+        } else if (!resultadoEmail.success) {
             novosErros.email = "Digite um e-mail válido.";
         }
 
@@ -75,14 +78,13 @@ export function LeadForm() {
         if (areaInteresse === "Outro") {
             if (!outroInteresse.trim()) {
                 novosErros.outroInteresse = "Digite sua área de interesse.";
-            } else if (outroInteresse.trim().length < 2) {
-                novosErros.outroInteresse = "Área de interesse muito curta.";
-            } else if (
-                !/^[\p{L}\p{M}0-9][\p{L}\p{M}0-9 .+#&/'-]*$/u.test(
-                    outroInteresse.trim()
-                )
-            ) {
-                novosErros.outroInteresse = "Área de interesse inválida.";
+            } else {
+                const resultadoArea = areaInteresseSchema.safeParse(outroInteresse);
+
+                if (!resultadoArea.success) {
+                    novosErros.outroInteresse =
+                        resultadoArea.error.issues[0].message;
+                }
             }
         }
 
@@ -172,7 +174,11 @@ export function LeadForm() {
                 >
                     {/* Nome */}
                     <div>
+                        <label htmlFor="nome" className="sr-only">
+                            Nome
+                        </label>
                         <input
+                            id="nome"
                             type="text"
                             placeholder="Nome"
                             value={nome}
@@ -197,7 +203,11 @@ export function LeadForm() {
 
                     {/* E-mail */}
                     <div>
+                        <label htmlFor="email" className="sr-only">
+                            E-mail
+                        </label>
                         <input
+                            id="email"
                             type="email"
                             placeholder="E-mail"
                             value={email}
@@ -220,9 +230,13 @@ export function LeadForm() {
                         )}
                     </div>
 
-                    {/* Área */}
+                    {/* Área de interesse*/}
                     <div>
+                        <label htmlFor="areaInteresse" className="sr-only">
+                            Área de interesse
+                        </label>
                         <select
+                            id="areaInteresse"
                             value={areaInteresse}
                             onChange={(e) => {
                                 const valor = e.target.value;
@@ -270,7 +284,11 @@ export function LeadForm() {
                     {/* Outra área */}
                     {areaInteresse === "Outro" && (
                         <div>
+                            <label htmlFor="outroInteresse" className="sr-only">
+                                Outra área de interesse
+                            </label>
                             <input
+                                id="outroInteresse"
                                 type="text"
                                 placeholder="Digite sua área de interesse"
                                 value={outroInteresse}
@@ -292,7 +310,7 @@ export function LeadForm() {
                             )}
                         </div>
                     )}
-                    
+
                     <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
                         <label htmlFor="website">Website</label>
                         <input
