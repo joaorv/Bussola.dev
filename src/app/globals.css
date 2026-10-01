@@ -160,3 +160,9 @@ body {
     animation: cookie-consent-enter 0.35s ease-out both;
   }
 }
+
+/* --- Modal dos Termos de Uso ----------------------------------------------
+   Com o <dialog> aberto a página por trás não rola junto. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}

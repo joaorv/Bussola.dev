@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { ratelimit } from "@/lib/rate-limit";
+import { CURRENT_TERMS_VERSION } from "@/lib/terms";
 import {
   areaInteresseSchema,
   emailSchema,
@@ -13,6 +14,8 @@ const leadSchema = z.object({
   nome: nomeSchema,
   email: emailSchema,
   areaInteresse: areaInteresseSchema,
+  termsAccepted: z.literal(true, "É preciso aceitar os Termos de Uso."),
+  termsVersion: z.string().trim().min(1).max(20),
 });
 
 export async function GET() {
@@ -67,7 +70,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const { nome, email, areaInteresse } = resultado.data;
+    const { nome, email, areaInteresse, termsVersion } = resultado.data;
+
+    // A página pode ter ficado aberta enquanto os termos mudavam: só aceita
+    // a versão que o usuário de fato leu.
+    if (termsVersion !== CURRENT_TERMS_VERSION) {
+      return NextResponse.json(
+        {
+          error:
+            "Os Termos de Uso foram atualizados. Recarregue a página para ler a nova versão.",
+        },
+        { status: 409 }
+      );
+    }
 
     const leadExistente = await prisma.lead.findUnique({
       where: {
@@ -90,6 +105,10 @@ export async function POST(request: Request) {
           nome,
           email,
           areaInteresse,
+          // Gravado junto com o lead: não existe lead sem aceite registrado.
+          termsAcceptances: {
+            create: { termsVersion },
+          },
         },
       });
     } catch (error) {

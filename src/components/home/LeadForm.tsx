@@ -6,6 +6,8 @@ import {
     emailSchema,
     nomeSchema,
 } from "@/lib/lead-validation";
+import { CURRENT_TERMS_VERSION } from "@/lib/terms";
+import { TermsModal } from "@/components/terms/TermsModal";
 
 type Erros = {
     nome: string;
@@ -35,6 +37,7 @@ export function LeadForm() {
         ""
     );
     const [enviando, setEnviando] = useState(false);
+    const [termosAbertos, setTermosAbertos] = useState(false);
 
     function limparErro(campo: keyof Erros) {
         setErros((errosAtuais) => ({
@@ -95,6 +98,11 @@ export function LeadForm() {
             return;
         }
 
+        // Dados válidos: o cadastro só é enviado depois do aceite dos termos.
+        setTermosAbertos(true);
+    }
+
+    async function enviarCadastro() {
         setEnviando(true);
 
         try {
@@ -111,13 +119,17 @@ export function LeadForm() {
                             ? outroInteresse.trim()
                             : areaInteresse,
                     website,
+                    termsAccepted: true,
+                    termsVersion: CURRENT_TERMS_VERSION,
                 }),
             });
 
-            const data = await response.json();
+            const data = await response.json().catch(() => null);
 
             if (response.status === 201) {
-                setMensagem("Cadastro realizado com sucesso!");
+                setMensagem(
+                    "Cadastro realizado e Termos de Uso aceitos com sucesso!"
+                );
                 setTipoMensagem("sucesso");
 
                 setNome("");
@@ -130,8 +142,9 @@ export function LeadForm() {
                 return;
             }
 
+            // E-mail repetido ou termos atualizados enquanto a página estava aberta.
             if (response.status === 409) {
-                setMensagem("Este e-mail já está cadastrado.");
+                setMensagem(data?.error ?? "Este e-mail já está cadastrado.");
                 setTipoMensagem("erro");
                 return;
             }
@@ -151,6 +164,7 @@ export function LeadForm() {
             setTipoMensagem("erro");
         } finally {
             setEnviando(false);
+            setTermosAbertos(false);
         }
     }
 
@@ -346,6 +360,14 @@ export function LeadForm() {
                     )}
                 </form>
             </div>
+
+            {termosAbertos && (
+                <TermsModal
+                    enviando={enviando}
+                    onAccept={enviarCadastro}
+                    onClose={() => setTermosAbertos(false)}
+                />
+            )}
         </section>
     );
 }

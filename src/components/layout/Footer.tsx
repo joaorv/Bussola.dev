@@ -5,6 +5,7 @@ const FOOTER_LINKS = [
   { href: "/#como-funciona", label: "Como funciona" },
   { href: "/trilhas", label: "Trilhas" },
   { href: "/contato", label: "Contato" },
+  { href: "/termos", label: "Termos de Uso" },
 ];
 
 export function Footer() {

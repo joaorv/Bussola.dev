@@ -8,9 +8,23 @@ datasource db {
 }
 
 model Lead {
-  id            Int      @id @default(autoincrement())
-  nome          String
-  email         String   @unique
-  areaInteresse String
-  createdAt     DateTime @default(now())
+  id               Int               @id @default(autoincrement())
+  nome             String
+  email            String            @unique
+  areaInteresse    String
+  createdAt        DateTime          @default(now())
+  termsAcceptances TermsAcceptance[]
+}
+
+// Histórico de aceitações dos Termos de Uso: uma linha por (lead, versão).
+// Aceitar uma versão nova cria outra linha, sem apagar as anteriores.
+model TermsAcceptance {
+  id           Int      @id @default(autoincrement())
+  leadId       Int
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  termsVersion String
+  acceptedAt   DateTime @default(now())
+
+  @@unique([leadId, termsVersion])
+  @@index([leadId, acceptedAt])
 }
