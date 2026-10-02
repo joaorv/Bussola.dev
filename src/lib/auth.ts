@@ -23,6 +23,9 @@ const credenciaisSchema = z.object({
 });
 
 export const authOptions: NextAuthOptions = {
+  // Explícito porque, em produção (Vercel, Docker, standalone), o NextAuth nem
+  // sempre lê a variável sozinho e o getServerSession falha com NO_SECRET.
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },

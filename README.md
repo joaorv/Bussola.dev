@@ -65,12 +65,6 @@ npm install
 
 O `postinstall` roda `prisma generate`, que gera o client em `src/generated/prisma`, uma pasta que não é versionada.
 
-> **Windows:** o script de `postinstall` usa sintaxe de bash e falha no `cmd`/PowerShell com `'DATABASE_URL' não é reconhecido...`. As dependências são instaladas mesmo assim. Com o `.env` já criado, gere o client manualmente:
->
-> ```bash
-> npx prisma generate
-> ```
-
 ### 4. Aplicar as migrations
 
 ```bash
