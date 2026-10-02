@@ -141,3 +141,22 @@ body {
     animation: none;
   }
 }
+
+/* --- Banner de cookies ---------------------------------------------------
+   Sobe suavemente da borda inferior na primeira exibição. */
+@keyframes cookie-consent-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cookie-consent-enter {
+    animation: cookie-consent-enter 0.35s ease-out both;
+  }
+}
