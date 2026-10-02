@@ -1,62 +1,61 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTimeRemaining, type TimeRemaining } from "@/lib/launch";
 
-type Unit = {
-  key: keyof Omit<TimeRemaining, "finished">;
-  label: string;
-  /** singular/plural para o resumo lido por leitores de tela */
-  spoken: [one: string, many: string];
-};
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
 
-const UNITS: Unit[] = [
-  { key: "days", label: "Dias", spoken: ["dia", "dias"] },
-  { key: "hours", label: "Horas", spoken: ["hora", "horas"] },
-  { key: "minutes", label: "Min", spoken: ["minuto", "minutos"] },
-  { key: "seconds", label: "Seg", spoken: ["segundo", "segundos"] },
-];
-
-function describe(remaining: TimeRemaining) {
-  if (remaining.finished) {
-    return "A plataforma já foi lançada.";
-  }
-
-  const parts = UNITS.map(({ key, spoken }) => {
-    const value = remaining[key];
-    return `${value} ${value === 1 ? spoken[0] : spoken[1]}`;
-  });
-
-  return `Faltam ${parts.slice(0, -1).join(", ")} e ${parts.at(-1)} para o lançamento.`;
-}
+export const DEFAULT_LAUNCH_DATE =
+  process.env.NEXT_PUBLIC_LAUNCH_DATE ?? "2026-11-05T00:00:00-03:00";
 
 type CountdownProps = {
-  /** Data alvo em ISO 8601 com fuso explícito. */
-  target: string;
+  target?: string;
   label?: string;
   className?: string;
 };
 
-export function Countdown({ target, label, className }: CountdownProps) {
-  // Começa em null e só ganha valor depois da montagem: o HTML do servidor
-  // seria calculado num instante diferente do cliente e quebraria a
-  // hidratação. Até lá as caixas aparecem com "--", sem pulo de layout.
-  const [remaining, setRemaining] = useState<TimeRemaining | null>(null);
+export function Countdown({
+  target = DEFAULT_LAUNCH_DATE,
+  label,
+  className,
+}: CountdownProps) {
+  const [time, setTime] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  } | null>(null);
 
   useEffect(() => {
-    // Recalcula a partir do relógio a cada tique, em vez de decrementar um
-    // contador: assim a contagem não acumula desvio quando o navegador
-    // engasga ou estrangula timers de abas em segundo plano.
-    const update = () => setRemaining(getTimeRemaining(target));
+    const update = () => {
+      const diff = Math.max(0, new Date(target).getTime() - Date.now());
+      if (Number.isNaN(diff)) {
+        setTime({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      setTime({
+        days: Math.floor(diff / DAY),
+        hours: Math.floor((diff % DAY) / HOUR),
+        minutes: Math.floor((diff % HOUR) / MINUTE),
+        seconds: Math.floor((diff % MINUTE) / SECOND),
+      });
+    };
 
     update();
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, [target]);
 
+  const units = [
+    { label: "Dias", value: time?.days },
+    { label: "Horas", value: time?.hours },
+    { label: "Min", value: time?.minutes },
+    { label: "Seg", value: time?.seconds },
+  ];
+
   return (
-    // role="timer" já implica aria-live="off": o resumo abaixo fica disponível
-    // para leitura sob demanda, sem ser anunciado a cada segundo.
     <div role="timer" className={className}>
       {label ? (
         <p className="text-xs font-medium tracking-[0.18em] text-white/50 uppercase">
@@ -64,15 +63,11 @@ export function Countdown({ target, label, className }: CountdownProps) {
         </p>
       ) : null}
 
-      <span className="sr-only">
-        {remaining ? describe(remaining) : "Carregando a contagem regressiva."}
-      </span>
-
       <div aria-hidden="true" className="mt-4 flex gap-2 sm:gap-4">
-        {UNITS.map(({ key, label: unitLabel }) => (
-          <div key={key} className="flex flex-col items-center gap-2">
+        {units.map(({ label: unitLabel, value }) => (
+          <div key={unitLabel} className="flex flex-col items-center gap-2">
             <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-night-soft text-xl font-semibold text-white tabular-nums ring-1 ring-night-line sm:h-[4.5rem] sm:w-[4.5rem] sm:text-3xl">
-              {remaining ? String(remaining[key]).padStart(2, "0") : "--"}
+              {value !== undefined ? String(value).padStart(2, "0") : "--"}
             </span>
             <span className="text-[0.65rem] font-medium tracking-widest text-white/50 uppercase">
               {unitLabel}

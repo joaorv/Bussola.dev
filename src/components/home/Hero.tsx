@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { LAUNCH_DATE } from "@/lib/launch";
 import { CompassRose } from "./CompassRose";
 import { Countdown } from "./Countdown";
 
@@ -32,7 +31,6 @@ export function Hero() {
           </Link>
 
           <Countdown
-            target={LAUNCH_DATE}
             label="Faltam para o lançamento"
             className="mt-12"
           />

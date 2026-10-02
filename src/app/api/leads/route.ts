@@ -15,13 +15,6 @@ const leadSchema = z.object({
   areaInteresse: areaInteresseSchema,
 });
 
-export async function GET() {
-  return NextResponse.json(
-    { error: "Método não permitido" },
-    { status: 405 }
-  );
-}
-
 export async function POST(request: Request) {
   try {
     const forwardedFor = request.headers.get("x-forwarded-for");
@@ -48,20 +41,10 @@ export async function POST(request: Request) {
     const resultado = leadSchema.safeParse(body);
 
     if (!resultado.success) {
-      const erros: Record<string, string> = {};
-
-      for (const issue of resultado.error.issues) {
-        const campo = issue.path[0];
-
-        if (typeof campo === "string" && !erros[campo]) {
-          erros[campo] = issue.message;
-        }
-      }
-
       return NextResponse.json(
         {
           error: "Dados inválidos",
-          erros,
+          erros: resultado.error.flatten().fieldErrors,
         },
         { status: 400 }
       );
@@ -69,29 +52,16 @@ export async function POST(request: Request) {
 
     const { nome, email, areaInteresse } = resultado.data;
 
-    const leadExistente = await prisma.lead.findUnique({
-      where: {
-        email,
-      },
-    });
-
-    if (leadExistente) {
-      return NextResponse.json(
-        { error: "Este e-mail já está cadastrado." },
-        { status: 409 }
-      );
-    }
-
-    let lead;
-
     try {
-      lead = await prisma.lead.create({
+      const lead = await prisma.lead.create({
         data: {
           nome,
           email,
           areaInteresse,
         },
       });
+
+      return NextResponse.json(lead, { status: 201 });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -105,8 +75,6 @@ export async function POST(request: Request) {
 
       throw error;
     }
-
-    return NextResponse.json(lead, { status: 201 });
   } catch (error) {
     console.error("Erro ao criar lead:", error);
 
