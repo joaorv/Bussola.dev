@@ -1,29 +1,47 @@
 "use client";
 
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { setCookieConsent } from "@/lib/cookie-consent";
-import { useCookieConsent } from "@/lib/use-cookie-consent";
 
 type CookieConsentProps = {
   title?: string;
   description?: string;
-  /** Rota da política de privacidade; sem ela o link não é exibido. */
   privacyHref?: string;
 };
+
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function getSnapshot() {
+  try {
+    return localStorage.getItem("cookie-consent");
+  } catch {
+    return null;
+  }
+}
 
 export function CookieConsent({
   title = "Este site utiliza cookies",
   description = "Usamos cookies para garantir o funcionamento do site e melhorar sua experiência de navegação. Você pode aceitar ou recusar o uso.",
   privacyHref,
 }: CookieConsentProps) {
-  const consent = useCookieConsent();
+  const [dismissed, setDismissed] = useState(false);
+  const consent = useSyncExternalStore(subscribe, getSnapshot, () => "server");
 
-  // Só aparece quando sabemos, já no cliente, que não há escolha salva.
-  if (consent !== null) return null;
+  if (dismissed || consent !== null) return null;
+
+  const handleChoice = (choice: "accepted" | "rejected") => {
+    try {
+      localStorage.setItem("cookie-consent", choice);
+    } catch {
+      // Ignora erro se localStorage não estiver disponível
+    }
+    setDismissed(true);
+  };
 
   return (
-    // pointer-events-none no invólucro: a faixa ao redor do cartão não
-    // bloqueia cliques no conteúdo da página por baixo.
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-gutter pb-4 sm:pb-6">
       <section
         aria-labelledby="cookie-consent-title"
@@ -59,14 +77,14 @@ export function CookieConsent({
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:shrink-0">
           <button
             type="button"
-            onClick={() => setCookieConsent("rejected")}
+            onClick={() => handleChoice("rejected")}
             className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-muted hover:bg-background"
           >
             Recusar cookies
           </button>
           <button
             type="button"
-            onClick={() => setCookieConsent("accepted")}
+            onClick={() => handleChoice("accepted")}
             className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-hover"
           >
             Aceitar cookies

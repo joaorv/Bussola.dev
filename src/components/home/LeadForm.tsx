@@ -2,350 +2,212 @@
 
 import { useState } from "react";
 import {
-    areaInteresseSchema,
-    emailSchema,
-    nomeSchema,
+  areaInteresseSchema,
+  areasPredefinidas,
+  emailSchema,
+  nomeSchema,
 } from "@/lib/lead-validation";
 
-type Erros = {
-    nome: string;
-    email: string;
-    areaInteresse: string;
-    outroInteresse: string;
-};
-
-const errosVazios: Erros = {
-    nome: "",
-    email: "",
-    areaInteresse: "",
-    outroInteresse: "",
+const initialForm = {
+  nome: "",
+  email: "",
+  areaInteresse: "",
+  outroInteresse: "",
+  website: "",
 };
 
 export function LeadForm() {
-    const [nome, setNome] = useState("");
-    const [email, setEmail] = useState("");
-    const [areaInteresse, setAreaInteresse] = useState("");
-    const [outroInteresse, setOutroInteresse] = useState("");
-    const [website, setWebsite] = useState("");
+  const [form, setForm] = useState(initialForm);
+  const [erros, setErros] = useState<Record<string, string>>({});
+  const [feedback, setFeedback] = useState<{ type: "sucesso" | "erro"; text: string } | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-    const [erros, setErros] = useState<Erros>(errosVazios);
+  function updateField(field: keyof typeof initialForm, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === "areaInteresse" && value !== "Outro" ? { outroInteresse: "" } : {}),
+    }));
+    if (erros[field]) {
+      setErros((prev) => ({ ...prev, [field]: "" }));
+    }
+  }
 
-    const [mensagem, setMensagem] = useState("");
-    const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro" | "">(
-        ""
-    );
-    const [enviando, setEnviando] = useState(false);
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFeedback(null);
 
-    function limparErro(campo: keyof Erros) {
-        setErros((errosAtuais) => ({
-            ...errosAtuais,
-            [campo]: "",
-        }));
+    const novosErros: Record<string, string> = {};
+
+    const valNome = nomeSchema.safeParse(form.nome);
+    if (!form.nome.trim()) novosErros.nome = "Digite seu nome.";
+    else if (!valNome.success) novosErros.nome = valNome.error.issues[0].message;
+
+    const valEmail = emailSchema.safeParse(form.email);
+    if (!form.email.trim()) novosErros.email = "Digite seu e-mail.";
+    else if (!valEmail.success) novosErros.email = "Digite um e-mail válido.";
+
+    if (!form.areaInteresse) {
+      novosErros.areaInteresse = "Selecione uma área de interesse.";
+    } else if (form.areaInteresse === "Outro") {
+      if (!form.outroInteresse.trim()) {
+        novosErros.outroInteresse = "Digite sua área de interesse.";
+      } else {
+        const valArea = areaInteresseSchema.safeParse(form.outroInteresse);
+        if (!valArea.success) novosErros.outroInteresse = valArea.error.issues[0].message;
+      }
     }
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        setMensagem("");
-        setTipoMensagem("");
-
-        const novosErros: Erros = { ...errosVazios };
-
-        // Nome
-        const resultadoNome = nomeSchema.safeParse(nome);
-
-        if (!nome.trim()) {
-            novosErros.nome = "Digite seu nome.";
-        } else if (!resultadoNome.success) {
-            novosErros.nome = resultadoNome.error.issues[0].message;
-        }
-
-        // E-mail
-        const resultadoEmail = emailSchema.safeParse(email);
-
-        if (!email.trim()) {
-            novosErros.email = "Digite seu e-mail.";
-        } else if (!resultadoEmail.success) {
-            novosErros.email = "Digite um e-mail válido.";
-        }
-
-        // Área de interesse
-        if (!areaInteresse) {
-            novosErros.areaInteresse = "Selecione uma área de interesse.";
-        }
-
-        // Outra área
-        if (areaInteresse === "Outro") {
-            if (!outroInteresse.trim()) {
-                novosErros.outroInteresse = "Digite sua área de interesse.";
-            } else {
-                const resultadoArea = areaInteresseSchema.safeParse(outroInteresse);
-
-                if (!resultadoArea.success) {
-                    novosErros.outroInteresse =
-                        resultadoArea.error.issues[0].message;
-                }
-            }
-        }
-
-        setErros(novosErros);
-
-        // Impede o envio se houver qualquer erro
-        if (Object.values(novosErros).some((erro) => erro !== "")) {
-            return;
-        }
-
-        setEnviando(true);
-
-        try {
-            const response = await fetch("/api/leads", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    nome: nome.trim(),
-                    email: email.trim(),
-                    areaInteresse:
-                        areaInteresse === "Outro"
-                            ? outroInteresse.trim()
-                            : areaInteresse,
-                    website,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.status === 201) {
-                setMensagem("Cadastro realizado com sucesso!");
-                setTipoMensagem("sucesso");
-
-                setNome("");
-                setEmail("");
-                setAreaInteresse("");
-                setOutroInteresse("");
-                setWebsite("");
-                setErros({ ...errosVazios });
-
-                return;
-            }
-
-            if (response.status === 409) {
-                setMensagem("Este e-mail já está cadastrado.");
-                setTipoMensagem("erro");
-                return;
-            }
-
-            if (response.status === 400) {
-                setMensagem("Verifique os dados preenchidos.");
-                setTipoMensagem("erro");
-                return;
-            }
-
-            setMensagem("Não foi possível realizar o cadastro.");
-            setTipoMensagem("erro");
-        } catch (error) {
-            console.error("Erro ao enviar formulário:", error);
-
-            setMensagem("Erro de conexão. Tente novamente.");
-            setTipoMensagem("erro");
-        } finally {
-            setEnviando(false);
-        }
+    if (Object.keys(novosErros).length > 0) {
+      setErros(novosErros);
+      return;
     }
 
-    return (
-        <section
-            id="lista-de-espera"
-            className="bg-night px-gutter py-section-sm text-white"
-        >
-            <div className="mx-auto w-full max-w-xl">
-                <h2 className="text-3xl font-semibold">
-                    Entre na lista de espera
-                </h2>
+    setErros({});
+    setEnviando(true);
 
-                <p className="mt-3 text-white/70">
-                    Deixe seus dados para acompanhar o lançamento do Bussola.dev.
-                </p>
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: form.nome.trim(),
+          email: form.email.trim(),
+          areaInteresse: form.areaInteresse === "Outro" ? form.outroInteresse.trim() : form.areaInteresse,
+          website: form.website,
+        }),
+      });
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="mt-8 flex w-full flex-col gap-4"
-                >
-                    {/* Nome */}
-                    <div>
-                        <label htmlFor="nome" className="sr-only">
-                            Nome
-                        </label>
-                        <input
-                            id="nome"
-                            type="text"
-                            placeholder="Nome"
-                            value={nome}
-                            maxLength={100}
-                            autoComplete="name"
-                            onChange={(e) => {
-                                setNome(e.target.value);
-                                limparErro("nome");
-                            }}
-                            className={`w-full rounded-md border bg-white p-3 text-black outline-none ${erros.nome
-                                ? "border-red-500"
-                                : "border-white/20"
-                                }`}
-                        />
+      if (response.status === 201) {
+        setFeedback({ type: "sucesso", text: "Cadastro realizado com sucesso!" });
+        setForm(initialForm);
+        return;
+      }
 
-                        {erros.nome && (
-                            <p className="mt-1 text-sm text-red-400">
-                                {erros.nome}
-                            </p>
-                        )}
-                    </div>
+      const msg =
+        response.status === 409
+          ? "Este e-mail já está cadastrado."
+          : response.status === 400
+          ? "Verifique os dados preenchidos."
+          : "Não foi possível realizar o cadastro.";
 
-                    {/* E-mail */}
-                    <div>
-                        <label htmlFor="email" className="sr-only">
-                            E-mail
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            placeholder="E-mail"
-                            value={email}
-                            maxLength={254}
-                            autoComplete="email"
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                                limparErro("email");
-                            }}
-                            className={`w-full rounded-md border bg-white p-3 text-black outline-none ${erros.email
-                                ? "border-red-500"
-                                : "border-white/20"
-                                }`}
-                        />
+      setFeedback({ type: "erro", text: msg });
+    } catch (error) {
+      console.error("Erro ao enviar formulário:", error);
+      setFeedback({ type: "erro", text: "Erro de conexão. Tente novamente." });
+    } finally {
+      setEnviando(false);
+    }
+  }
 
-                        {erros.email && (
-                            <p className="mt-1 text-sm text-red-400">
-                                {erros.email}
-                            </p>
-                        )}
-                    </div>
+  return (
+    <section id="lista-de-espera" className="bg-night px-gutter py-section-sm text-white">
+      <div className="mx-auto w-full max-w-xl">
+        <h2 className="text-3xl font-semibold">Entre na lista de espera</h2>
+        <p className="mt-3 text-white/70">
+          Deixe seus dados para acompanhar o lançamento do Bussola.dev.
+        </p>
 
-                    {/* Área de interesse*/}
-                    <div>
-                        <label htmlFor="areaInteresse" className="sr-only">
-                            Área de interesse
-                        </label>
-                        <select
-                            id="areaInteresse"
-                            value={areaInteresse}
-                            onChange={(e) => {
-                                const valor = e.target.value;
+        <form onSubmit={handleSubmit} className="mt-8 flex w-full flex-col gap-4">
+          <div>
+            <label htmlFor="nome" className="sr-only">Nome</label>
+            <input
+              id="nome"
+              type="text"
+              placeholder="Nome"
+              value={form.nome}
+              maxLength={100}
+              autoComplete="name"
+              onChange={(e) => updateField("nome", e.target.value)}
+              className={`w-full rounded-md border bg-white p-3 text-black outline-none ${
+                erros.nome ? "border-red-500" : "border-white/20"
+              }`}
+            />
+            {erros.nome && <p className="mt-1 text-sm text-red-400">{erros.nome}</p>}
+          </div>
 
-                                setAreaInteresse(valor);
-                                limparErro("areaInteresse");
+          <div>
+            <label htmlFor="email" className="sr-only">E-mail</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="E-mail"
+              value={form.email}
+              maxLength={254}
+              autoComplete="email"
+              onChange={(e) => updateField("email", e.target.value)}
+              className={`w-full rounded-md border bg-white p-3 text-black outline-none ${
+                erros.email ? "border-red-500" : "border-white/20"
+              }`}
+            />
+            {erros.email && <p className="mt-1 text-sm text-red-400">{erros.email}</p>}
+          </div>
 
-                                if (valor !== "Outro") {
-                                    setOutroInteresse("");
-                                    limparErro("outroInteresse");
-                                }
-                            }}
-                            className={`w-full rounded-md border bg-white p-3 text-black outline-none ${erros.areaInteresse
-                                ? "border-red-500"
-                                : "border-white/20"
-                                }`}
-                        >
-                            <option value="">
-                                Selecione sua área de interesse
-                            </option>
-                            <option value="Desenvolvimento Web">
-                                Desenvolvimento Web
-                            </option>
-                            <option value="Desenvolvimento Mobile">
-                                Desenvolvimento Mobile
-                            </option>
-                            <option value="Backend">Backend</option>
-                            <option value="Frontend">Frontend</option>
-                            <option value="Banco de Dados">
-                                Banco de Dados
-                            </option>
-                            <option value="DevOps">DevOps</option>
-                            <option value="Dados e IA">Dados e IA</option>
-                            <option value="Segurança">Segurança</option>
-                            <option value="Outro">Outro</option>
-                        </select>
+          <div>
+            <label htmlFor="areaInteresse" className="sr-only">Área de interesse</label>
+            <select
+              id="areaInteresse"
+              value={form.areaInteresse}
+              onChange={(e) => updateField("areaInteresse", e.target.value)}
+              className={`w-full rounded-md border bg-white p-3 text-black outline-none ${
+                erros.areaInteresse ? "border-red-500" : "border-white/20"
+              }`}
+            >
+              <option value="">Selecione sua área de interesse</option>
+              {areasPredefinidas.map((area) => (
+                <option key={area} value={area}>{area}</option>
+              ))}
+              <option value="Outro">Outro</option>
+            </select>
+            {erros.areaInteresse && <p className="mt-1 text-sm text-red-400">{erros.areaInteresse}</p>}
+          </div>
 
-                        {erros.areaInteresse && (
-                            <p className="mt-1 text-sm text-red-400">
-                                {erros.areaInteresse}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Outra área */}
-                    {areaInteresse === "Outro" && (
-                        <div>
-                            <label htmlFor="outroInteresse" className="sr-only">
-                                Outra área de interesse
-                            </label>
-                            <input
-                                id="outroInteresse"
-                                type="text"
-                                placeholder="Digite sua área de interesse"
-                                value={outroInteresse}
-                                maxLength={100}
-                                onChange={(e) => {
-                                    setOutroInteresse(e.target.value);
-                                    limparErro("outroInteresse");
-                                }}
-                                className={`w-full rounded-md border bg-white p-3 text-black outline-none ${erros.outroInteresse
-                                    ? "border-red-500"
-                                    : "border-white/20"
-                                    }`}
-                            />
-
-                            {erros.outroInteresse && (
-                                <p className="mt-1 text-sm text-red-400">
-                                    {erros.outroInteresse}
-                                </p>
-                            )}
-                        </div>
-                    )}
-
-                    <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-                        <label htmlFor="website">Website</label>
-                        <input
-                            id="website"
-                            name="website"
-                            type="text"
-                            tabIndex={-1}
-                            autoComplete="off"
-                            value={website}
-                            onChange={(e) => setWebsite(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Botão */}
-                    <button
-                        type="submit"
-                        disabled={enviando}
-                        className="h-12 w-full rounded-md bg-accent font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        {enviando ? "Enviando..." : "Quero participar"}
-                    </button>
-
-                    {/* Mensagem */}
-                    {mensagem && (
-                        <p
-                            className={`text-center text-sm ${tipoMensagem === "sucesso"
-                                ? "text-green-400"
-                                : "text-red-400"
-                                }`}
-                        >
-                            {mensagem}
-                        </p>
-                    )}
-                </form>
+          {form.areaInteresse === "Outro" && (
+            <div>
+              <label htmlFor="outroInteresse" className="sr-only">Outra área de interesse</label>
+              <input
+                id="outroInteresse"
+                type="text"
+                placeholder="Digite sua área de interesse"
+                value={form.outroInteresse}
+                maxLength={100}
+                onChange={(e) => updateField("outroInteresse", e.target.value)}
+                className={`w-full rounded-md border bg-white p-3 text-black outline-none ${
+                  erros.outroInteresse ? "border-red-500" : "border-white/20"
+                }`}
+              />
+              {erros.outroInteresse && <p className="mt-1 text-sm text-red-400">{erros.outroInteresse}</p>}
             </div>
-        </section>
-    );
+          )}
+
+          <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+            <label htmlFor="website">Website</label>
+            <input
+              id="website"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={form.website}
+              onChange={(e) => updateField("website", e.target.value)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={enviando}
+            className="h-12 w-full rounded-md bg-accent font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {enviando ? "Enviando..." : "Quero participar"}
+          </button>
+
+          {feedback && (
+            <p className={`text-center text-sm ${feedback.type === "sucesso" ? "text-green-400" : "text-red-400"}`}>
+              {feedback.text}
+            </p>
+          )}
+        </form>
+      </div>
+    </section>
+  );
 }
