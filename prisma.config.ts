@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -9,6 +9,9 @@ export default defineConfig({
   },
 
   datasource: {
-    url: env("DATABASE_URL"),
+    // process.env em vez de env(): o env() lança erro se a variável não
+    // existir, o que quebraria o `prisma generate` do postinstall em ambientes
+    // sem DATABASE_URL (CI, clone novo). O generate não precisa da URL.
+    url: process.env.DATABASE_URL,
   },
 });
