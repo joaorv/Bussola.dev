@@ -160,3 +160,21 @@ body {
     animation: cookie-consent-enter 0.35s ease-out both;
   }
 }
+
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast-enter {
+    animation: toast-enter 0.35s ease-out both;
+  }
+}

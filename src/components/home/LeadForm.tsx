@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { Toast } from "@/components/layout/Toast";
 import {
   areaInteresseSchema,
   areasPredefinidas,
@@ -19,8 +20,15 @@ const initialForm = {
 export function LeadForm() {
   const [form, setForm] = useState(initialForm);
   const [erros, setErros] = useState<Record<string, string>>({});
-  const [feedback, setFeedback] = useState<{ type: "sucesso" | "erro"; text: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    id: number;
+    type: "sucesso" | "erro";
+    title: string;
+    text: string;
+  } | null>(null);
   const [enviando, setEnviando] = useState(false);
+
+  const fecharFeedback = useCallback(() => setFeedback(null), []);
 
   function updateField(field: keyof typeof initialForm, value: string) {
     setForm((prev) => ({
@@ -79,7 +87,12 @@ export function LeadForm() {
       });
 
       if (response.status === 201) {
-        setFeedback({ type: "sucesso", text: "Cadastro realizado com sucesso!" });
+        setFeedback({
+          id: Date.now(),
+          type: "sucesso",
+          title: "Cadastro realizado!",
+          text: "Você entrou na lista de espera do Bussola.dev.",
+        });
         setForm(initialForm);
         return;
       }
@@ -91,10 +104,15 @@ export function LeadForm() {
           ? "Verifique os dados preenchidos."
           : "Não foi possível realizar o cadastro.";
 
-      setFeedback({ type: "erro", text: msg });
+      setFeedback({ id: Date.now(), type: "erro", title: "Não foi possível cadastrar", text: msg });
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
-      setFeedback({ type: "erro", text: "Erro de conexão. Tente novamente." });
+      setFeedback({
+        id: Date.now(),
+        type: "erro",
+        title: "Não foi possível cadastrar",
+        text: "Erro de conexão. Tente novamente.",
+      });
     } finally {
       setEnviando(false);
     }
@@ -200,14 +218,18 @@ export function LeadForm() {
           >
             {enviando ? "Enviando..." : "Quero participar"}
           </button>
-
-          {feedback && (
-            <p className={`text-center text-sm ${feedback.type === "sucesso" ? "text-green-400" : "text-red-400"}`}>
-              {feedback.text}
-            </p>
-          )}
         </form>
       </div>
+
+      {feedback && (
+        <Toast
+          key={feedback.id}
+          type={feedback.type}
+          title={feedback.title}
+          description={feedback.text}
+          onClose={fecharFeedback}
+        />
+      )}
     </section>
   );
 }
