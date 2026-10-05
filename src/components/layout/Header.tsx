@@ -6,17 +6,14 @@ import { CompassIcon } from "./CompassIcon";
 
 // "/#..." e não "#...": o cabeçalho aparece em todas as páginas, então o link
 // precisa voltar para a home antes de rolar até a seção.
-const NAV_LINKS = [
-  { href: "/trilhas", label: "Trilhas" },
-  { href: "/#como-funciona", label: "Como funciona" },
-];
+const NAV_LINKS = [{ href: "/#como-funciona", label: "Como funciona" }];
 
 export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface/90 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-gutter">
+    <header className="sticky top-0 z-50 h-16 border-b border-border bg-surface/90 backdrop-blur">
+      <div className="mx-auto flex h-full w-full max-w-6xl items-center justify-between px-gutter">
         <Link
           href="/"
           className="flex items-center gap-2 text-lg font-semibold text-foreground"
@@ -26,24 +23,25 @@ export function Header() {
           Bússola.dev
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-medium text-muted sm:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="flex items-center gap-2 sm:gap-6">
+          <nav className="hidden items-center gap-6 text-sm font-medium text-muted sm:flex">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
 
-        <div className="flex items-center gap-2">
           <Link
-            href="/login"
-            className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-hover"
+            href="/#lista-de-espera"
+            onClick={() => setOpen(false)}
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover active:bg-accent-active"
           >
-            Entrar
+            Entrar na lista
           </Link>
 
           <button
@@ -71,10 +69,13 @@ export function Header() {
         </div>
       </div>
 
+      {/* absoluto, sobre o conteúdo: se ocupasse espaço no fluxo, fechar o menu
+          no clique encolheria o cabeçalho e a seção de destino subiria para
+          baixo dele. */}
       {open ? (
         <nav
           id="mobile-nav"
-          className="border-t border-border px-gutter py-4 sm:hidden"
+          className="absolute inset-x-0 top-full border-b border-border bg-surface px-gutter py-4 shadow-lg shadow-black/5 sm:hidden"
         >
           <ul className="flex flex-col gap-4 text-sm font-medium text-muted">
             {NAV_LINKS.map((link) => (

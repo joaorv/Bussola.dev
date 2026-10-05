@@ -102,6 +102,12 @@ body {
   }
 }
 
+/* O cabeçalho é sticky com h-16 (4rem): sem essa folga, toda âncora para
+   embaixo dele e o topo da seção fica escondido. */
+html {
+  scroll-padding-top: 4rem;
+}
+
 /* --- Arte da bússola (hero) --------------------------------------------
    Movimento discreto: a rosa flutua e a agulha oscila como se procurasse
    o norte. Puro enfeite — desligado para quem pede menos animação. */
