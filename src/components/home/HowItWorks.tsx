@@ -196,33 +196,6 @@ export function HowItWorks() {
           })}
         </ol>
 
-        <div className="relative isolate mt-section-sm overflow-hidden rounded-lg border border-night-line bg-night p-8 text-white sm:p-10 lg:mt-section">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_80%_at_90%_10%,rgba(78,127,203,0.25),transparent_70%)]"
-          />
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-xl">
-              <h3 className="text-2xl font-semibold tracking-tight text-balance">
-                Seja dos primeiros a usar a Bússola.dev
-              </h3>
-              <p className="mt-3 text-white/70">
-                Entre na lista de espera e acompanhe de perto o lançamento da
-                trilha de Desenvolvimento Web.
-              </p>
-            </div>
-            <Link
-              href="#lista-de-espera"
-              className="inline-flex h-12 shrink-0 items-center justify-center rounded-md bg-accent px-7 text-base font-medium text-white shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover active:bg-accent-active"
-            >
-              Entrar na lista de espera
-            </Link>
-          </div>
-          <p className="mt-8 border-t border-night-line pt-6 text-sm text-white/60">
-            Todo o conteúdo regional é selecionado manualmente pela nossa
-            equipe, sem depender de cadastro de terceiros.
-          </p>
-        </div>
       </div>
     </section>
   );
