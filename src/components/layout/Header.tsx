@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CompassIcon } from "./CompassIcon";
+import { scrollToAnchor, scrollToTop } from "@/lib/scroll";
 
 // "/#..." e não "#...": o cabeçalho aparece em todas as páginas, então o link
 // precisa voltar para a home antes de rolar até a seção.
-const NAV_LINKS = [{ href: "/#como-funciona", label: "Como funciona" }];
+const NAV_LINKS = [{ href: "/#como-funciona", id: "como-funciona", label: "Como funciona" }];
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -17,7 +18,10 @@ export function Header() {
         <Link
           href="/"
           className="flex items-center gap-2 text-lg font-semibold text-foreground"
-          onClick={() => setOpen(false)}
+          onClick={(e) => {
+            scrollToTop(e);
+            setOpen(false);
+          }}
         >
           <CompassIcon className="h-6 w-6 text-brand" />
           Bússola.dev
@@ -29,6 +33,7 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={(e) => scrollToAnchor(e, link.id)}
                 className="transition-colors hover:text-foreground"
               >
                 {link.label}
@@ -38,7 +43,10 @@ export function Header() {
 
           <Link
             href="/#lista-de-espera"
-            onClick={() => setOpen(false)}
+            onClick={(e) => {
+              scrollToAnchor(e, "lista-de-espera");
+              setOpen(false);
+            }}
             className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover active:bg-accent-active"
           >
             Entrar na lista
@@ -82,7 +90,10 @@ export function Header() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => {
+                    scrollToAnchor(e, link.id);
+                    setOpen(false);
+                  }}
                   className="block transition-colors hover:text-foreground"
                 >
                   {link.label}

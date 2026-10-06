@@ -9,6 +9,9 @@ const CARDINALS = [
   { label: "O", x: 44, y: 206 },
 ];
 
+// Todas as animações (classes compass-*) ficam em globals.css. Os elementos
+// que giram em torno do centro usam transform-box: view-box com origem em
+// 200px 200px, o centro do viewBox.
 export function CompassRose({ className }: { className?: string }) {
   return (
     <svg
@@ -49,8 +52,25 @@ export function CompassRose({ className }: { className?: string }) {
         </linearGradient>
       </defs>
 
-      {/* halo por trás do instrumento */}
-      <circle cx="200" cy="200" r="200" fill="url(#compass-glow)" />
+      {/* halo por trás do instrumento, "respirando" */}
+      <circle
+        cx="200"
+        cy="200"
+        r="200"
+        fill="url(#compass-glow)"
+        className="compass-halo"
+      />
+
+      {/* ondas que saem do centro, como um sinal sendo emitido */}
+      <circle cx="200" cy="200" r="60" stroke="#4E7FCB" strokeWidth="1.5" className="compass-ripple" />
+      <circle
+        cx="200"
+        cy="200"
+        r="60"
+        stroke="#4E7FCB"
+        strokeWidth="1.5"
+        className="compass-ripple compass-ripple-delay"
+      />
 
       {/* aros */}
       <circle cx="200" cy="200" r="188" stroke="#2A3F66" strokeWidth="1" />
@@ -60,23 +80,28 @@ export function CompassRose({ className }: { className?: string }) {
         r="188"
         stroke="#4E7FCB"
         strokeWidth="2"
-        strokeOpacity="0.45"
+        strokeOpacity="0.6"
         strokeLinecap="round"
         strokeDasharray="1 14"
+        className="compass-ring-outer"
       />
       <circle cx="200" cy="200" r="152" stroke="#2A3F66" strokeWidth="1" />
       <circle
         cx="200"
         cy="200"
         r="112"
-        stroke="#2A3F66"
+        stroke="#4E7FCB"
+        strokeOpacity="0.5"
         strokeWidth="1"
         strokeDasharray="4 8"
+        className="compass-ring-inner"
       />
 
-      {/* ponto luminoso sobre o aro externo, a rota já traçada */}
-      <circle cx="310" cy="43" r="6" fill="#E4572E" />
-      <circle cx="310" cy="43" r="12" fill="#E4572E" fillOpacity="0.2" />
+      {/* ponto luminoso percorrendo o aro externo: a rota sendo traçada */}
+      <g className="compass-orbit">
+        <circle cx="200" cy="12" r="12" fill="#E4572E" className="compass-beacon" />
+        <circle cx="200" cy="12" r="6" fill="#E4572E" />
+      </g>
 
       {/* graduação */}
       <g stroke="#4E7FCB">
@@ -98,7 +123,7 @@ export function CompassRose({ className }: { className?: string }) {
         })}
       </g>
 
-      {/* pontos cardeais */}
+      {/* pontos cardeais; o N brilha para onde a agulha aponta */}
       <g
         className="font-mono"
         fill="#8996AC"
@@ -107,7 +132,12 @@ export function CompassRose({ className }: { className?: string }) {
         textAnchor="middle"
       >
         {CARDINALS.map(({ label, x, y }) => (
-          <text key={label} x={x} y={y}>
+          <text
+            key={label}
+            x={x}
+            y={y}
+            className={label === "N" ? "compass-north" : undefined}
+          >
             {label}
           </text>
         ))}
@@ -128,7 +158,7 @@ export function CompassRose({ className }: { className?: string }) {
         <path d="M200 348 211 200h-11v148Z" fill="#0C1428" fillOpacity="0.25" />
 
         <circle cx="200" cy="200" r="15" fill="#14213D" stroke="#4E7FCB" />
-        <circle cx="200" cy="200" r="5" fill="#E4572E" />
+        <circle cx="200" cy="200" r="5" fill="#E4572E" className="compass-pivot" />
       </g>
     </svg>
   );
