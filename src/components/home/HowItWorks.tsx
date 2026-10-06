@@ -57,7 +57,7 @@ export function HowItWorks() {
   return (
     <section
       id="como-funciona"
-      className="relative isolate overflow-hidden bg-background py-section-sm lg:py-section"
+      className="relative isolate overflow-hidden bg-background"
     >
       {/* curvas de nível, como as de uma carta náutica */}
       <svg
@@ -73,7 +73,13 @@ export function HowItWorks() {
         <path d="M-40 354C260 294 460 414 740 384s420-128 800-48" vectorEffect="non-scaling-stroke" />
       </svg>
 
-      <div className="mx-auto w-full max-w-6xl px-gutter">
+      {/* degradê de entrada: o céu noturno do hero se dissolve no papel da carta */}
+      <div
+        aria-hidden="true"
+        className="h-28 bg-linear-to-b from-night via-night/40 to-transparent lg:h-44"
+      />
+
+      <div className="mx-auto w-full max-w-6xl px-gutter pb-section-sm lg:pb-section">
         <p className="text-sm font-semibold uppercase tracking-wider text-accent">
           Como funciona
         </p>
@@ -194,8 +200,13 @@ export function HowItWorks() {
             );
           })}
         </ol>
-
       </div>
+
+      {/* degradê de saída: escurece de volta para a faixa da lista de espera */}
+      <div
+        aria-hidden="true"
+        className="h-28 bg-linear-to-b from-transparent via-night/40 to-night lg:h-44"
+      />
     </section>
   );
 }
