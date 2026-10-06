@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { CompassIcon } from "@/components/layout/CompassIcon";
 
 const SEM_BUSSOLA = [

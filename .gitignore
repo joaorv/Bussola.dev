@@ -46,3 +46,7 @@ next-env.d.ts
 # instruções para agentes de IA, geradas pelo Next a cada "next dev"
 AGENTS.md
 CLAUDE.md
+.agents
+skills-lock.json
+docs
+.scratch

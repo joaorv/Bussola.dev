@@ -109,42 +109,220 @@ html {
 }
 
 /* --- Arte da bússola (hero) --------------------------------------------
-   Movimento discreto: a rosa flutua e a agulha oscila como se procurasse
-   o norte. Puro enfeite — desligado para quem pede menos animação. */
+   Física de agulha magnética viva: deflexões bem visíveis (até ~7.5°),
+   amortecimentos nítidos, pausas naturais e flutuação envolvente. */
 @keyframes compass-float {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(-14px);
+    transform: translateY(-16px) rotate(1deg);
   }
 }
 
-@keyframes compass-sway {
+@keyframes compass-needle-magnetic {
   0%,
-  100% {
-    transform: rotate(-4deg);
+  8% {
+    transform: rotate(0deg);
+  }
+  13% {
+    transform: rotate(7.5deg);
+  }
+  16% {
+    transform: rotate(4.8deg);
+  }
+  19% {
+    transform: rotate(6.4deg);
+  }
+  22% {
+    transform: rotate(5.8deg);
+  }
+  34% {
+    transform: rotate(5.8deg);
+  }
+  41% {
+    transform: rotate(-6.8deg);
+  }
+  44% {
+    transform: rotate(-4.2deg);
+  }
+  47% {
+    transform: rotate(-5.6deg);
   }
   50% {
-    transform: rotate(4deg);
+    transform: rotate(-5.2deg);
+  }
+  63% {
+    transform: rotate(-5.2deg);
+  }
+  71% {
+    transform: rotate(2.8deg);
+  }
+  74% {
+    transform: rotate(1.6deg);
+  }
+  84% {
+    transform: rotate(1.6deg);
+  }
+  92% {
+    transform: rotate(-0.8deg);
+  }
+  96% {
+    transform: rotate(0.4deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes compass-beacon-glow {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes compass-halo-breathe {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes compass-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes compass-spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes compass-ripple {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.1);
+  }
+}
+
+@keyframes compass-north-glow {
+  0%,
+  100% {
+    fill: #8996ac;
+  }
+  50% {
+    fill: #f27f52;
+  }
+}
+
+@keyframes compass-pivot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
   }
 }
 
 .compass-art {
-  animation: compass-float 12s ease-in-out infinite;
+  animation: compass-float 6s ease-in-out infinite;
+}
+
+/* Elementos que giram em torno do centro da rosa (200,200 no viewBox). */
+.compass-needle,
+.compass-orbit,
+.compass-ring-outer,
+.compass-ring-inner,
+.compass-ripple {
+  transform-box: view-box;
+  transform-origin: 200px 200px;
 }
 
 .compass-needle {
-  transform-box: view-box;
-  transform-origin: 200px 200px;
-  animation: compass-sway 9s ease-in-out infinite;
+  animation: compass-needle-magnetic 8s cubic-bezier(0.25, 1, 0.5, 1) infinite;
 }
 
+.compass-orbit {
+  animation: compass-spin 24s linear infinite;
+}
+
+.compass-ring-outer {
+  animation: compass-spin 60s linear infinite;
+}
+
+.compass-ring-inner {
+  animation: compass-spin-reverse 40s linear infinite;
+}
+
+.compass-ripple {
+  animation: compass-ripple 4s ease-out infinite;
+}
+
+.compass-ripple-delay {
+  animation-delay: 2s;
+}
+
+.compass-north {
+  font-weight: 600;
+  animation: compass-north-glow 4s ease-in-out infinite;
+}
+
+.compass-beacon,
+.compass-halo,
+.compass-pivot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.compass-beacon {
+  animation: compass-beacon-glow 2.5s ease-in-out infinite;
+}
+
+.compass-halo {
+  animation: compass-halo-breathe 6s ease-in-out infinite;
+}
+
+.compass-pivot {
+  animation: compass-pivot-pulse 2s ease-in-out infinite;
+}
+
+/* Quem pede menos movimento vê a bússola parada. As ondas somem de vez,
+   porque congeladas no meio do ciclo pareceriam um defeito. */
 @media (prefers-reduced-motion: reduce) {
   .compass-art,
-  .compass-needle {
+  .compass-needle,
+  .compass-orbit,
+  .compass-ring-outer,
+  .compass-ring-inner,
+  .compass-ripple,
+  .compass-north,
+  .compass-beacon,
+  .compass-halo,
+  .compass-pivot {
     animation: none;
+  }
+
+  .compass-ripple {
+    display: none;
   }
 }
 
