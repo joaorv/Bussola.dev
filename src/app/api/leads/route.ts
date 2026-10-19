@@ -13,6 +13,8 @@ const leadSchema = z.object({
   nome: nomeSchema,
   email: emailSchema,
   areaInteresse: areaInteresseSchema,
+  // Consentimento (LGPD): o cadastro só é aceito com os termos e a política aceitos.
+  aceiteTermos: z.literal(true),
 });
 
 export async function POST(request: Request) {

@@ -1,7 +1,7 @@
 // Rotas e dados compartilhados pelas páginas legais, pelo rodapé e pelo banner
 // de cookies.
-export const PRIVACY_POLICY_HREF = "/politica-de-privacidade";
-export const TERMS_OF_USE_HREF = "/termos-de-uso";
+export const PRIVACY_POLICY_HREF = "/privacidade";
+export const TERMS_OF_USE_HREF = "/termos";
 
 // Data da última revisão dos dois documentos (AAAA-MM-DD). Atualize sempre que
 // o texto de qualquer um deles mudar.

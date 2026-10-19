@@ -140,7 +140,7 @@ Com credenciais erradas, a sessão volta vazia (`{}`).
 
 | Rota | Método | Descrição |
 | --- | --- | --- |
-| `/api/leads` | `POST` | Cadastra um lead da lista de espera (`nome`, `email`, `areaInteresse`). Tem rate limit de 5 requisições por minuto por IP. |
+| `/api/leads` | `POST` | Cadastra um lead da lista de espera (`nome`, `email`, `areaInteresse` e `aceiteTermos`, que precisa ser `true`). Tem rate limit de 5 requisições por minuto por IP. |
 | `/api/auth/*` | `GET`/`POST` | Rotas do NextAuth (signin, callback, session, csrf, signout). |
 
 ## Estrutura
@@ -153,15 +153,18 @@ src/
   app/
     api/auth/[...nextauth]/route.ts   # handler do NextAuth
     api/leads/route.ts                # captação de leads
+    privacidade/, termos/             # Política de Privacidade e Termos de Uso
     layout.tsx, page.tsx              # layout e landing page
   components/
     home/                # seções da landing (Hero, Countdown, HowItWorks, LeadForm)
     layout/              # Header, Footer
+    legal/               # layout compartilhado das páginas legais
   lib/
     auth.ts              # configuração do NextAuth + getSession()
     prisma.ts            # instância única do Prisma Client
     rate-limit.ts        # rate limit (Upstash)
     lead-validation.ts   # schemas Zod compartilhados
+    legal.ts             # rotas, data de atualização e contato das páginas legais
     launch.ts            # data de lançamento do contador
   types/                 # augmentations de tipos (next-auth)
   generated/prisma/      # client gerado pelo Prisma (não versionado)

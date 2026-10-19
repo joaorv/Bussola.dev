@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { Toast } from "@/components/layout/Toast";
+import { PRIVACY_POLICY_HREF, TERMS_OF_USE_HREF } from "@/lib/legal";
 import {
   areaInteresseSchema,
   areasPredefinidas,
@@ -15,6 +17,7 @@ const initialForm = {
   areaInteresse: "",
   outroInteresse: "",
   website: "",
+  aceiteTermos: false,
 };
 
 export function LeadForm() {
@@ -30,7 +33,10 @@ export function LeadForm() {
 
   const fecharFeedback = useCallback(() => setFeedback(null), []);
 
-  function updateField(field: keyof typeof initialForm, value: string) {
+  function updateField<K extends keyof typeof initialForm>(
+    field: K,
+    value: (typeof initialForm)[K]
+  ) {
     setForm((prev) => ({
       ...prev,
       [field]: value,
@@ -66,6 +72,10 @@ export function LeadForm() {
       }
     }
 
+    if (!form.aceiteTermos) {
+      novosErros.aceiteTermos = "Aceite os Termos de Uso e a Política de Privacidade para continuar.";
+    }
+
     if (Object.keys(novosErros).length > 0) {
       setErros(novosErros);
       return;
@@ -83,6 +93,7 @@ export function LeadForm() {
           email: form.email.trim(),
           areaInteresse: form.areaInteresse === "Outro" ? form.outroInteresse.trim() : form.areaInteresse,
           website: form.website,
+          aceiteTermos: form.aceiteTermos,
         }),
       });
 
@@ -209,6 +220,41 @@ export function LeadForm() {
               value={form.website}
               onChange={(e) => updateField("website", e.target.value)}
             />
+          </div>
+
+          <div>
+            <div className="flex items-start gap-3">
+              <input
+                id="aceiteTermos"
+                type="checkbox"
+                checked={form.aceiteTermos}
+                onChange={(e) => updateField("aceiteTermos", e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 accent-accent"
+              />
+              {/* abre em nova aba para não perder o que já foi preenchido */}
+              <label htmlFor="aceiteTermos" className="text-sm leading-6 text-white/80">
+                Li e concordo com os{" "}
+                <Link
+                  href={TERMS_OF_USE_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-white underline underline-offset-2 transition-colors hover:text-accent-hover"
+                >
+                  Termos de Uso
+                </Link>{" "}
+                e com a{" "}
+                <Link
+                  href={PRIVACY_POLICY_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-white underline underline-offset-2 transition-colors hover:text-accent-hover"
+                >
+                  Política de Privacidade
+                </Link>
+                .
+              </label>
+            </div>
+            {erros.aceiteTermos && <p className="mt-1 text-sm text-red-400">{erros.aceiteTermos}</p>}
           </div>
 
           <button
