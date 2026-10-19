@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/layout/CookieConsent";
+import { PRIVACY_POLICY_HREF, TERMS_OF_USE_HREF } from "@/lib/legal";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,7 +30,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Header />
         <main className="flex flex-1 flex-col">{children}</main>
         <Footer />
-        <CookieConsent />
+        <CookieConsent
+          privacyHref={PRIVACY_POLICY_HREF}
+          termsHref={TERMS_OF_USE_HREF}
+        />
       </body>
     </html>
   );

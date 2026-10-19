@@ -7,7 +7,11 @@ type CookieConsentProps = {
   title?: string;
   description?: string;
   privacyHref?: string;
+  termsHref?: string;
 };
+
+const LINK_CLASS =
+  "font-medium text-brand underline underline-offset-2 transition-colors hover:text-brand-hover";
 
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
@@ -26,6 +30,7 @@ export function CookieConsent({
   title = "Este site utiliza cookies",
   description = "Usamos cookies para garantir o funcionamento do site e melhorar sua experiência de navegação. Você pode aceitar ou recusar o uso.",
   privacyHref,
+  termsHref,
 }: CookieConsentProps) {
   const [dismissed, setDismissed] = useState(false);
   const consent = useSyncExternalStore(subscribe, getSnapshot, () => "server");
@@ -60,17 +65,25 @@ export function CookieConsent({
             className="mt-1 text-sm text-muted"
           >
             {description}
+            {privacyHref || termsHref ? " Saiba mais " : null}
             {privacyHref ? (
               <>
-                {" "}
-                <Link
-                  href={privacyHref}
-                  className="font-medium text-brand underline underline-offset-2 transition-colors hover:text-brand-hover"
-                >
+                na{" "}
+                <Link href={privacyHref} className={LINK_CLASS}>
                   Política de Privacidade
                 </Link>
               </>
             ) : null}
+            {privacyHref && termsHref ? " e " : null}
+            {termsHref ? (
+              <>
+                nos{" "}
+                <Link href={termsHref} className={LINK_CLASS}>
+                  Termos de Uso
+                </Link>
+              </>
+            ) : null}
+            {privacyHref || termsHref ? "." : null}
           </p>
         </div>
 
