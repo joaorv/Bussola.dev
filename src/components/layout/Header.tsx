@@ -39,6 +39,12 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/login"
+              className="transition-colors hover:text-foreground"
+            >
+              Entrar
+            </Link>
           </nav>
 
           <Link
@@ -100,6 +106,15 @@ export function Header() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="block transition-colors hover:text-foreground"
+              >
+                Entrar
+              </Link>
+            </li>
           </ul>
         </nav>
       ) : null}
