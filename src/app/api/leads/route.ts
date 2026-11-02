@@ -3,7 +3,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { ratelimit } from "@/lib/rate-limit";
-import { setLeadCookie } from "@/lib/lead-access";
 import {
   areaInteresseSchema,
   emailSchema,
@@ -64,19 +63,15 @@ export async function POST(request: Request) {
         },
       });
 
-      return setLeadCookie(NextResponse.json(lead, { status: 201 }));
+      return NextResponse.json(lead, { status: 201 });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        // Quem já está na lista também pode ver os roadmaps, por exemplo
-        // depois de trocar de navegador.
-        return setLeadCookie(
-          NextResponse.json(
-            { error: "Este e-mail já está cadastrado." },
-            { status: 409 }
-          )
+        return NextResponse.json(
+          { error: "Este e-mail já está cadastrado." },
+          { status: 409 }
         );
       }
 

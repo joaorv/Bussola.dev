@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Toast } from "@/components/layout/Toast";
 import { PRIVACY_POLICY_HREF, TERMS_OF_USE_HREF } from "@/lib/legal";
 import {
@@ -11,7 +10,6 @@ import {
   emailSchema,
   nomeSchema,
 } from "@/lib/lead-validation";
-import { roadmapHrefForArea } from "@/lib/roadmap-areas";
 
 const initialForm = {
   nome: "",
@@ -23,7 +21,6 @@ const initialForm = {
 };
 
 export function LeadForm() {
-  const router = useRouter();
   const [form, setForm] = useState(initialForm);
   const [erros, setErros] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<{
@@ -87,8 +84,6 @@ export function LeadForm() {
     setErros({});
     setEnviando(true);
 
-    const area = form.areaInteresse === "Outro" ? form.outroInteresse.trim() : form.areaInteresse;
-
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
@@ -96,21 +91,27 @@ export function LeadForm() {
         body: JSON.stringify({
           nome: form.nome.trim(),
           email: form.email.trim(),
-          areaInteresse: area,
+          areaInteresse: form.areaInteresse === "Outro" ? form.outroInteresse.trim() : form.areaInteresse,
           website: form.website,
           aceiteTermos: form.aceiteTermos,
         }),
       });
 
-      // 409: o e-mail já está na lista. A API libera os roadmaps nos dois
-      // casos, então quem volta em outro navegador também consegue entrar.
-      if (response.status === 201 || response.status === 409) {
-        router.push(roadmapHrefForArea(area));
+      if (response.status === 201) {
+        setFeedback({
+          id: Date.now(),
+          type: "sucesso",
+          title: "Cadastro realizado!",
+          text: "Você entrou na lista de espera do Bussola.dev.",
+        });
+        setForm(initialForm);
         return;
       }
 
       const msg =
-        response.status === 400
+        response.status === 409
+          ? "Este e-mail já está cadastrado."
+          : response.status === 400
           ? "Verifique os dados preenchidos."
           : "Não foi possível realizar o cadastro.";
 
