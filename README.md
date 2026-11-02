@@ -46,6 +46,11 @@ UPSTASH_REDIS_REST_TOKEN="xxxx"
 
 # Opcional: data de lançamento usada pelo contador regressivo
 # NEXT_PUBLIC_LAUNCH_DATE="2026-11-05T00:00:00-03:00"
+
+# E-mail de lançamento (Gmail + Vercel Cron)
+GMAIL_USER="seuemail@gmail.com"
+GMAIL_APP_PASSWORD="xxxx xxxx xxxx xxxx"
+CRON_SECRET="gere-uma-chave-aleatoria"
 ```
 
 | Variável | Obrigatória | Para que serve |
@@ -56,6 +61,21 @@ UPSTASH_REDIS_REST_TOKEN="xxxx"
 | `UPSTASH_REDIS_REST_URL` | Sim | URL REST do Redis, no painel do Upstash. Sem ela, o `POST /api/leads` falha. |
 | `UPSTASH_REDIS_REST_TOKEN` | Sim | Token REST do Redis, no mesmo painel. |
 | `NEXT_PUBLIC_LAUNCH_DATE` | Não | Data do lançamento em ISO 8601 com fuso. O padrão fica em `src/lib/launch.ts`. |
+| `GMAIL_USER` | Para o e-mail de lançamento | Conta Gmail que envia o e-mail de lançamento para a lista de espera. |
+| `GMAIL_APP_PASSWORD` | Para o e-mail de lançamento | [Senha de app](https://myaccount.google.com/apppasswords) dessa conta (exige verificação em duas etapas). Não é a senha normal do Gmail. |
+| `CRON_SECRET` | Para o e-mail de lançamento | Protege `GET /api/cron/lancamento`. A Vercel envia esse valor automaticamente no cron; na mão, mande `Authorization: Bearer <CRON_SECRET>`. |
+
+### E-mail de lançamento
+
+O `vercel.json` agenda `GET /api/cron/lancamento` todo dia às 03:00 UTC (00:00 em Brasília). Antes da data de lançamento a rota não faz nada; a partir dela, envia o e-mail para cada lead que ainda não recebeu e marca `emailLancamentoEnviadoEm`, então ninguém recebe duas vezes.
+
+```bash
+# E-mail de teste só para você (não mexe no banco)
+curl -H "Authorization: Bearer $CRON_SECRET" "https://seu-site/api/cron/lancamento?para=voce@gmail.com"
+
+# Disparo manual para a lista toda, mesmo antes da data
+curl -H "Authorization: Bearer $CRON_SECRET" "https://seu-site/api/cron/lancamento?forcar=1"
+```
 
 ### 3. Instalar as dependências
 
@@ -71,7 +91,7 @@ O `postinstall` roda `prisma generate`, que gera o client em `src/generated/pris
 npx prisma migrate deploy
 ```
 
-Esse comando cria as tabelas `Lead` e `User` no banco do `DATABASE_URL`. Se você for **alterar o schema**, use `npx prisma migrate dev --name descricao-da-mudanca`, que gera uma migration nova.
+Esse comando cria as tabelas `Lead` e `User` no banco do `DATABASE_URL`. Na Vercel isso é automático: o script `vercel-build` roda `prisma migrate deploy` antes do `next build`, só nos deploys de produção. Se você for **alterar o schema**, use `npx prisma migrate dev --name descricao-da-mudanca`, que gera uma migration nova.
 
 ### 5. Subir o servidor
 

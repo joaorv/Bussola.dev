@@ -13,6 +13,9 @@ model Lead {
   email         String   @unique
   areaInteresse String
   createdAt     DateTime @default(now())
+  // Preenchido quando o e-mail de lançamento sai, para que um novo disparo
+  // (cron ou manual) não envie duas vezes para o mesmo lead.
+  emailLancamentoEnviadoEm DateTime?
 }
 
 // Usuário da plataforma, autenticado pelo NextAuth (provider de credenciais).
