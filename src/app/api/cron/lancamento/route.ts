@@ -23,7 +23,7 @@ const ENVIOS_SIMULTANEOS = 3;
 const TEMPO_LIMITE_MS = 240_000;
 
 function urlDoSite() {
-  return (process.env.NEXTAUTH_URL ?? "https://bussola.dev").replace(/\/$/, "");
+  return (process.env.NEXTAUTH_URL ?? "https://bussola-dev.vercel.app").replace(/\/$/, "");
 }
 
 async function enviar(para: string, nome: string, areaInteresse: string) {
