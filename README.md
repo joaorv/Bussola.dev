@@ -45,7 +45,7 @@ UPSTASH_REDIS_REST_URL="https://xxxx.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="xxxx"
 
 # Opcional: data de lançamento usada pelo contador regressivo
-# NEXT_PUBLIC_LAUNCH_DATE="2026-11-05T00:00:00-03:00"
+# NEXT_PUBLIC_LAUNCH_DATE="2026-11-30T00:00:00-03:00"
 
 # E-mail de lançamento (Gmail + Vercel Cron)
 GMAIL_USER="seuemail@gmail.com"
