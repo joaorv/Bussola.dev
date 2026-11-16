@@ -27,6 +27,24 @@ model User {
   senhaHash String
   // Copiadas do pré-cadastro (Lead) com o mesmo e-mail, quando existe.
   areasInteresse String[] @default([])
+
+  // Perfil público-profissional, editado em /perfil/editar. Todos opcionais:
+  // null = a pessoa não preencheu ou apagou o campo.
+  profissao   String?
+  localizacao String?
+  sobre       String?
+  linkedinUrl String?
+  githubUrl   String?
+  siteUrl     String?
+
+  // Foto já recortada e reduzida no navegador (quadrada, ~400px), guardada no
+  // próprio banco para não depender de um serviço de storage. Nunca selecione
+  // `foto` sem precisar: só a rota GET /api/perfil/foto lê os bytes.
+  foto             Bytes?
+  fotoTipo         String?
+  // Muda a cada troca de foto; vai na URL (?v=) para furar o cache do navegador.
+  fotoAtualizadaEm DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

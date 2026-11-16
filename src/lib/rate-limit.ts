@@ -1,4 +1,4 @@
-import { Ratelimit } from "@upstash/ratelimit";
+import { Ratelimit, type Duration } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 const upstashConfigurado = Boolean(
@@ -13,10 +13,28 @@ if (semRateLimit) {
   console.warn("[rate-limit] Upstash não configurado: rate limit desativado em desenvolvimento.");
 }
 
-export const ratelimit: Pick<Ratelimit, "limit"> = semRateLimit
-  ? { limit: async () => ({ success: true, limit: 0, remaining: 0, reset: 0, pending: Promise.resolve() }) }
-  : new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(5, "1 m"),
-      prefix: "bussola:leads",
-    });
+type Limitador = Pick<Ratelimit, "limit">;
+
+const semLimite: Limitador = {
+  limit: async () => ({ success: true, limit: 0, remaining: 0, reset: 0, pending: Promise.resolve() }),
+};
+
+let redis: Redis | undefined;
+
+function criarRatelimit(prefix: string, requisicoes: number, janela: Duration): Limitador {
+  if (semRateLimit) return semLimite;
+
+  redis ??= Redis.fromEnv();
+  return new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(requisicoes, janela),
+    prefix,
+  });
+}
+
+// Formulários públicos (lista de espera e cadastro), por IP.
+export const ratelimit = criarRatelimit("bussola:leads", 5, "1 m");
+
+// Edição do perfil, por usuário. Mais folgado: quem está logado salva o
+// formulário e troca a foto algumas vezes seguidas sem problema.
+export const ratelimitPerfil = criarRatelimit("bussola:perfil", 20, "1 m");

@@ -7,6 +7,8 @@ import { getRoadmap, getRoadmaps } from "@/lib/roadmaps";
 import { roadmapIdForAreas } from "@/lib/roadmap-areas";
 import { resumirProgresso, type ResumoProgresso } from "@/lib/progresso";
 import { LevelBadge } from "@/components/roadmap/LevelBadge";
+import { Avatar } from "@/components/perfil/Avatar";
+import { fotoUrl, perfilSelect } from "@/lib/perfil";
 
 export const metadata: Metadata = {
   title: "Meu perfil | Bússola.dev",
@@ -20,11 +22,9 @@ const dataLonga = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
 });
 
-function iniciais(nome: string) {
-  const partes = nome.trim().split(/\s+/);
-  const primeira = partes[0]?.[0] ?? "";
-  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : "";
-  return (primeira + ultima).toUpperCase();
+// "https://github.com/fulano/" -> "github.com/fulano", só para exibir.
+function semProtocolo(url: string) {
+  return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
 
 export default async function PerfilPage() {
@@ -38,10 +38,7 @@ export default async function PerfilPage() {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
-      nome: true,
-      email: true,
-      areasInteresse: true,
-      createdAt: true,
+      ...perfilSelect,
       topicosConcluidos: {
         select: { roadmapId: true, topicId: true, concluidoEm: true },
       },
@@ -75,6 +72,12 @@ export default async function PerfilPage() {
     resumos[0] ?? (sugeridaRoadmap ? resumirProgresso(sugeridaRoadmap, []) : null);
   const outras = resumos.slice(1);
 
+  const links = [
+    { rotulo: "LinkedIn", url: user.linkedinUrl },
+    { rotulo: "GitHub", url: user.githubUrl },
+    { rotulo: "Site", url: user.siteUrl },
+  ].filter((l): l is { rotulo: string; url: string } => Boolean(l.url));
+
   return (
     <>
       <section
@@ -82,29 +85,80 @@ export default async function PerfilPage() {
         className="bg-night px-gutter py-section-sm text-white"
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 sm:flex-row sm:items-center">
-          <span
-            aria-hidden="true"
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-night-soft text-xl font-semibold ring-1 ring-night-line"
-          >
-            {iniciais(user.nome)}
-          </span>
-          <div className="min-w-0">
+          <Avatar
+            nome={user.nome}
+            fotoUrl={fotoUrl(user.fotoAtualizadaEm)}
+            className="h-20 w-20 bg-night-soft text-2xl ring-1 ring-night-line"
+          />
+          <div className="min-w-0 flex-1">
             <h1
               id="perfil-title"
               className="text-3xl font-semibold tracking-tight text-balance"
             >
               {user.nome}
             </h1>
-            <p className="mt-1 truncate text-white/70">{user.email}</p>
+            {user.profissao && (
+              <p className="mt-1 text-lg text-white/90">{user.profissao}</p>
+            )}
+            <p className="mt-1 truncate text-white/70">
+              {user.localizacao && <>{user.localizacao} · </>}
+              {user.email}
+            </p>
             <p className="mt-1 text-sm text-white/50">
               Membro desde {dataLonga.format(user.createdAt)}
             </p>
           </div>
+          <Link
+            href="/perfil/editar"
+            className="self-start rounded-md border border-night-line bg-night-soft px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-night-line sm:self-center"
+          >
+            Editar perfil
+          </Link>
         </div>
       </section>
 
       <div className="mx-auto grid w-full max-w-6xl gap-6 px-gutter py-section-sm lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-10">
         <aside className="flex flex-col gap-6 lg:self-start">
+          {user.sobre && (
+            <section
+              aria-labelledby="sobre-title"
+              className="rounded-lg border border-border bg-surface p-card"
+            >
+              <h2 id="sobre-title" className="text-sm font-semibold text-foreground">
+                Sobre
+              </h2>
+              <p className="mt-3 text-sm leading-6 whitespace-pre-line break-words text-(--color-ink-700)">
+                {user.sobre}
+              </p>
+            </section>
+          )}
+
+          {links.length > 0 && (
+            <section
+              aria-labelledby="links-title"
+              className="rounded-lg border border-border bg-surface p-card"
+            >
+              <h2 id="links-title" className="text-sm font-semibold text-foreground">
+                Links
+              </h2>
+              <ul className="mt-3 flex flex-col gap-2">
+                {links.map((link) => (
+                  <li key={link.rotulo} className="min-w-0 text-sm">
+                    <span className="text-muted">{link.rotulo}: </span>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="break-all text-brand hover:underline"
+                    >
+                      {semProtocolo(link.url)}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section
             aria-labelledby="areas-title"
             className="rounded-lg border border-border bg-surface p-card"

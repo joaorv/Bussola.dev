@@ -45,8 +45,10 @@ export const authOptions: NextAuthOptions = {
 
         const { email, password } = resultado.data;
 
+        // `select` explícito: sem ele o Prisma traria também os bytes da foto.
         const user = await prisma.user.findUnique({
           where: { email },
+          select: { id: true, nome: true, email: true, senhaHash: true },
         });
 
         const senhaValida = await compare(
