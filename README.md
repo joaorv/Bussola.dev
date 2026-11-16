@@ -117,8 +117,8 @@ A configuração fica em [`src/lib/auth.ts`](src/lib/auth.ts), e as rotas do Nex
 
 - **Provider:** credenciais (e-mail e senha). O e-mail é normalizado para minúsculas, e a senha é conferida contra o `senhaHash` (bcrypt, custo `BCRYPT_COST`) da tabela `User`.
 - **Sessão:** JWT em cookie, sem tabela de sessão. O `id` do usuário vai para `session.user.id`, com os tipos em [`src/types/next-auth.d.ts`](src/types/next-auth.d.ts).
-- **Página de login:** configurada como `/login`, que **ainda não existe**.
-- **Cadastro:** **ainda não existe**. Quando for criado, o hash precisa usar o mesmo `BCRYPT_COST` exportado de `src/lib/auth.ts`.
+- **Página de login:** `/login`.
+- **Cadastro:** a tela fica em `/cadastro` e envia para `POST /api/auth/register`. O formulário valida nome, e-mail, senha (mínimo de 8 caracteres), confirmação de senha e aceite dos termos antes de enviar, mostra os erros embaixo de cada campo e, quando a conta é criada, já faz o login. As regras de senha ficam em `src/lib/user-validation.ts`, compartilhadas com a API. O hash usa o `BCRYPT_COST` exportado de `src/lib/auth.ts`.
 
 ### Rotas privadas
 
@@ -140,7 +140,7 @@ session.user.id; // id do usuário
 
 ### Criando um usuário de teste
 
-Enquanto não há tela de cadastro, dá para criar um usuário direto no banco:
+Também dá para criar um usuário direto no banco, sem passar pela tela de cadastro:
 
 1. Gere o hash da senha:
    ```bash
@@ -148,7 +148,7 @@ Enquanto não há tela de cadastro, dá para criar um usuário direto no banco:
    ```
 2. Rode `npx prisma studio`, abra a tabela `User` e adicione um registro com `nome`, `email` (em minúsculas) e o hash no campo `senhaHash`.
 
-Para testar o login sem interface, rode no console do navegador, com `http://localhost:3000` aberto (a página padrão `/api/auth/signin` redireciona para `/login`, que ainda não existe):
+Para testar o login sem interface, rode no console do navegador, com `http://localhost:3000` aberto (a página padrão `/api/auth/signin` redireciona para `/login`):
 
 ```js
 const { csrfToken } = await (await fetch("/api/auth/csrf")).json();

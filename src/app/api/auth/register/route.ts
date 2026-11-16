@@ -6,11 +6,12 @@ import { Prisma } from "@/generated/prisma/client";
 import { ratelimit } from "@/lib/rate-limit";
 import { BCRYPT_COST } from "@/lib/auth";
 import { emailSchema, nomeSchema } from "@/lib/lead-validation";
+import { senhaSchema } from "@/lib/user-validation";
 
 const registerSchema = z.object({
   nome: nomeSchema,
   email: emailSchema,
-  password: z.string().min(8).max(128),
+  password: senhaSchema,
   aceiteTermos: z.literal(true),
 });
 

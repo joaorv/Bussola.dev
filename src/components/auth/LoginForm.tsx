@@ -4,17 +4,12 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { safeCallbackUrl } from "@/lib/callback-url";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Só aceita caminhos internos ("/perfil"), para o parâmetro não virar um
-  // redirecionamento para outro site ("https://..." ou "//...").
-  const callbackParam = searchParams.get("callbackUrl");
-  const callbackUrl =
-    callbackParam?.startsWith("/") && !callbackParam.startsWith("//")
-      ? callbackParam
-      : "/";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -114,9 +109,16 @@ export function LoginForm() {
       </button>
 
       <p className="text-center text-xs text-muted">
-        Ainda não tem acesso?{" "}
-        <Link href="/#lista-de-espera" className="text-brand hover:underline">
-          Entrar na lista de espera
+        Ainda não tem conta?{" "}
+        <Link
+          href={
+            callbackUrl === "/"
+              ? "/cadastro"
+              : `/cadastro?callbackUrl=${encodeURIComponent(callbackUrl)}`
+          }
+          className="text-brand hover:underline"
+        >
+          Criar conta
         </Link>
       </p>
     </form>
