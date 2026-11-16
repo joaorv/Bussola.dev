@@ -1,3 +1,7 @@
+// O Prisma 7 não lê mais o .env sozinho: sem esta linha, o CLI (migrate,
+// studio, db pull) roda com DATABASE_URL vazia. Na Vercel as variáveis já vêm
+// do ambiente e o dotenv não sobrescreve nada.
+import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
 export default defineConfig({

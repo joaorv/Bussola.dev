@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/layout/CookieConsent";
+import { Providers } from "@/components/layout/Providers";
 import { PRIVACY_POLICY_HREF, TERMS_OF_USE_HREF } from "@/lib/legal";
 import "./globals.css";
 
@@ -27,13 +28,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <Header />
-        <main className="flex flex-1 flex-col">{children}</main>
-        <Footer />
-        <CookieConsent
-          privacyHref={PRIVACY_POLICY_HREF}
-          termsHref={TERMS_OF_USE_HREF}
-        />
+        <Providers>
+          <Header />
+          <main className="flex flex-1 flex-col">{children}</main>
+          <Footer />
+          <CookieConsent
+            privacyHref={PRIVACY_POLICY_HREF}
+            termsHref={TERMS_OF_USE_HREF}
+          />
+        </Providers>
       </body>
     </html>
   );

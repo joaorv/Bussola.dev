@@ -11,6 +11,10 @@ import {
   type TopicLevel,
 } from "@/lib/roadmaps";
 import { LevelBadge } from "@/components/roadmap/LevelBadge";
+import { TopicoCheck } from "@/components/roadmap/TopicoCheck";
+import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { resumirProgresso } from "@/lib/progresso";
 
 export function generateStaticParams() {
   return getRoadmaps().map((roadmap) => ({ id: roadmap.id }));
@@ -41,6 +45,21 @@ export default async function RoadmapPage({
     notFound();
   }
 
+  // Quem tem conta marca o progresso; quem só fez o pré-cadastro vê a trilha
+  // sem os checks.
+  const userId = (await getSession())?.user?.id;
+  const concluidos = userId
+    ? await prisma.progressoTopico.findMany({
+        where: { userId, roadmapId: roadmap.id },
+        select: { topicId: true, concluidoEm: true },
+      })
+    : [];
+  const feitos = new Set(concluidos.map((c) => c.topicId));
+  const progresso = resumirProgresso(roadmap, concluidos);
+  const etapaCompleta = new Set(
+    progresso.etapas.filter((e) => e.total > 0 && e.concluidos === e.total).map((e) => e.id)
+  );
+
   return (
     <>
       <section
@@ -64,6 +83,40 @@ export default async function RoadmapPage({
           <p className="mt-4 text-sm text-white/50">
             {roadmap.categories.length} etapas · {countTopics(roadmap)} tópicos
           </p>
+
+          {userId ? (
+            <div className="mt-6 max-w-md">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-white/70">Seu progresso</span>
+                <span className="tabular-nums text-white">
+                  {progresso.concluidos}/{progresso.total} · {progresso.percentual}%
+                </span>
+              </div>
+              <div
+                role="progressbar"
+                aria-label="Seu progresso nesta trilha"
+                aria-valuemin={0}
+                aria-valuemax={progresso.total}
+                aria-valuenow={progresso.concluidos}
+                className="mt-2 h-2 overflow-hidden rounded-full bg-night-line"
+              >
+                <div
+                  className="h-full rounded-full bg-success"
+                  style={{ width: `${progresso.percentual}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="mt-6 text-sm text-white/70">
+              <Link
+                href={`/login?callbackUrl=${encodeURIComponent(`/roadmaps/${roadmap.id}`)}`}
+                className="font-medium text-white underline underline-offset-2 hover:text-accent-hover"
+              >
+                Entre na sua conta
+              </Link>{" "}
+              para marcar os tópicos que já concluiu.
+            </p>
+          )}
         </div>
       </section>
 
@@ -85,9 +138,16 @@ export default async function RoadmapPage({
                 <li key={category.id}>
                   <a
                     href={`#${category.id}`}
-                    className="transition-colors hover:text-foreground"
+                    className="flex items-start justify-between gap-2 transition-colors hover:text-foreground"
                   >
-                    {category.order}. {category.name}
+                    <span>
+                      {category.order}. {category.name}
+                    </span>
+                    {etapaCompleta.has(category.id) && (
+                      <span className="text-success" aria-label="Etapa concluída">
+                        ✓
+                      </span>
+                    )}
                   </a>
                 </li>
               ))}
@@ -122,26 +182,55 @@ export default async function RoadmapPage({
               ) : null}
               <span
                 aria-hidden="true"
-                className="absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white"
+                className={`absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white ${
+                  etapaCompleta.has(category.id) ? "bg-success" : "bg-brand"
+                }`}
               >
-                {category.order}
+                {etapaCompleta.has(category.id) ? "✓" : category.order}
               </span>
 
-              <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-                {category.name}
-              </h2>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                  {category.name}
+                </h2>
+                {userId && (
+                  <p
+                    className={`text-sm tabular-nums ${
+                      etapaCompleta.has(category.id)
+                        ? "font-medium text-success-active dark:text-success-hover"
+                        : "text-muted"
+                    }`}
+                  >
+                    {etapaCompleta.has(category.id)
+                      ? "Etapa concluída"
+                      : `${progresso.etapas[index].concluidos}/${progresso.etapas[index].total} concluídos`}
+                  </p>
+                )}
+              </div>
 
               <ol className="mt-6 flex flex-col gap-4">
                 {category.topics.map((topic) => (
                   <li
                     key={topic.id}
-                    className="rounded-lg border border-border bg-surface p-card"
+                    className={`rounded-lg border bg-surface p-card ${
+                      feitos.has(topic.id) ? "border-success/40" : "border-border"
+                    }`}
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <h3 className="text-base font-semibold text-foreground">
                         {topic.title}
                       </h3>
-                      <LevelBadge level={topic.level} />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <LevelBadge level={topic.level} />
+                        {userId && (
+                          <TopicoCheck
+                            roadmapId={roadmap.id}
+                            topicId={topic.id}
+                            titulo={topic.title}
+                            concluido={feitos.has(topic.id)}
+                          />
+                        )}
+                      </div>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-(--color-ink-700)">
                       {topic.description}

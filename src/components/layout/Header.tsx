@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
 import { CompassIcon } from "./CompassIcon";
 import { scrollToAnchor, scrollToTop } from "@/lib/scroll";
 
@@ -11,6 +12,8 @@ const NAV_LINKS = [{ href: "/#como-funciona", id: "como-funciona", label: "Como 
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { status } = useSession();
+  const logado = status === "authenticated";
 
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-border bg-surface/90 backdrop-blur">
@@ -39,12 +42,24 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/login"
-              className="transition-colors hover:text-foreground"
-            >
-              Entrar
-            </Link>
+            {logado ? (
+              <>
+                <Link href="/perfil" className="transition-colors hover:text-foreground">
+                  Meu perfil
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="transition-colors hover:text-foreground"
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              <Link href="/login" className="transition-colors hover:text-foreground">
+                Entrar
+              </Link>
+            )}
           </nav>
 
           <Link
@@ -106,15 +121,38 @@ export function Header() {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="block transition-colors hover:text-foreground"
-              >
-                Entrar
-              </Link>
-            </li>
+            {logado ? (
+              <>
+                <li>
+                  <Link
+                    href="/perfil"
+                    onClick={() => setOpen(false)}
+                    className="block transition-colors hover:text-foreground"
+                  >
+                    Meu perfil
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="block transition-colors hover:text-foreground"
+                  >
+                    Sair
+                  </button>
+                </li>
+              </>
+            ) : (
+              <li>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="block transition-colors hover:text-foreground"
+                >
+                  Entrar
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
       ) : null}
