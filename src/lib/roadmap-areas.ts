@@ -12,7 +12,11 @@ const ROADMAP_POR_AREA: Record<string, string> = {
 
 // Com várias áreas marcadas, leva ao roadmap da primeira que tiver
 // correspondência (na ordem em que foram marcadas).
+export function roadmapIdForAreas(areas: string[]): string | undefined {
+  return areas.map((area) => ROADMAP_POR_AREA[area]).find(Boolean);
+}
+
 export function roadmapHrefForAreas(areas: string[]): string {
-  const id = areas.map((area) => ROADMAP_POR_AREA[area]).find(Boolean);
+  const id = roadmapIdForAreas(areas);
   return id ? `/roadmaps/${id}` : "/roadmaps";
 }

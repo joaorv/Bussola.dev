@@ -44,8 +44,15 @@ export async function POST(request: Request) {
     const { nome, email, password } = resultado.data;
     const senhaHash = await hash(password, BCRYPT_COST);
 
+    // Quem passou pela lista de espera já escolheu as áreas de interesse; o
+    // perfil aproveita essa escolha em vez de perguntar de novo.
+    const lead = await prisma.lead.findUnique({
+      where: { email },
+      select: { areasInteresse: true },
+    });
+
     const user = await prisma.user.create({
-      data: { nome, email, senhaHash },
+      data: { nome, email, senhaHash, areasInteresse: lead?.areasInteresse ?? [] },
       select: { id: true, nome: true, email: true, createdAt: true },
     });
 

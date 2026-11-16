@@ -25,6 +25,25 @@ model User {
   nome      String
   email     String   @unique
   senhaHash String
+  // Copiadas do pré-cadastro (Lead) com o mesmo e-mail, quando existe.
+  areasInteresse String[] @default([])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  topicosConcluidos ProgressoTopico[]
+}
+
+// Cada linha é um tópico de roadmap que o usuário marcou como concluído. Os
+// roadmaps vivem em src/data/roadmaps.json, então roadmapId e topicId são os
+// ids de lá (não há tabela de roadmap).
+model ProgressoTopico {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roadmapId   String
+  topicId     String
+  concluidoEm DateTime @default(now())
+
+  @@unique([userId, roadmapId, topicId])
+  @@index([userId])
 }

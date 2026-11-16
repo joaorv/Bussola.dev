@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 
 // Cookie gravado quando a pessoa entra na lista de espera. Ele libera os
 // roadmaps neste navegador; não é autenticação, só um "já fez o pré-cadastro".
@@ -20,11 +21,12 @@ export function setLeadCookie(response: NextResponse) {
   return response;
 }
 
-// Para as páginas de roadmap: sem pré-cadastro, volta para o formulário.
+// Para as páginas de roadmap: libera quem fez o pré-cadastro ou tem conta e
+// está logado; os demais voltam para o formulário.
 export async function requireLeadAccess() {
   const cookieStore = await cookies();
 
-  if (!cookieStore.has(LEAD_COOKIE)) {
+  if (!cookieStore.has(LEAD_COOKIE) && !(await getSession())) {
     redirect("/#lista-de-espera");
   }
 }

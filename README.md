@@ -91,7 +91,7 @@ O `postinstall` roda `prisma generate`, que gera o client em `src/generated/pris
 npx prisma migrate deploy
 ```
 
-Esse comando cria as tabelas `Lead` e `User` no banco do `DATABASE_URL`. Na Vercel isso é automático: o script `vercel-build` roda `prisma migrate deploy` antes do `next build`, só nos deploys de produção. Se você for **alterar o schema**, use `npx prisma migrate dev --name descricao-da-mudanca`, que gera uma migration nova.
+Esse comando cria as tabelas `Lead`, `User` e `ProgressoTopico` no banco do `DATABASE_URL`. Na Vercel isso é automático: o script `vercel-build` roda `prisma migrate deploy` antes do `next build`, só nos deploys de produção. Se você for **alterar o schema**, use `npx prisma migrate dev --name descricao-da-mudanca`, que gera uma migration nova.
 
 ### 5. Subir o servidor
 
@@ -119,6 +119,14 @@ A configuração fica em [`src/lib/auth.ts`](src/lib/auth.ts), e as rotas do Nex
 - **Sessão:** JWT em cookie, sem tabela de sessão. O `id` do usuário vai para `session.user.id`, com os tipos em [`src/types/next-auth.d.ts`](src/types/next-auth.d.ts).
 - **Página de login:** `/login`.
 - **Cadastro:** a tela fica em `/cadastro` e envia para `POST /api/auth/register`. O formulário valida nome, e-mail, senha (mínimo de 8 caracteres), confirmação de senha e aceite dos termos antes de enviar, mostra os erros embaixo de cada campo e, quando a conta é criada, já faz o login. As regras de senha ficam em `src/lib/user-validation.ts`, compartilhadas com a API. O hash usa o `BCRYPT_COST` exportado de `src/lib/auth.ts`.
+
+### Perfil
+
+`/perfil` (rota privada) mostra o nome, as áreas de interesse e o resumo do progresso: a trilha com atividade mais recente (ou, sem atividade, a sugerida pelas áreas), o percentual concluído, o próximo tópico e o progresso de cada etapa.
+
+- As áreas ficam em `User.areasInteresse`. No cadastro, são copiadas do pré-cadastro (`Lead`) com o mesmo e-mail.
+- O progresso fica na tabela `ProgressoTopico`: uma linha por tópico concluído (`roadmapId` e `topicId` são os ids de `src/data/roadmaps.json`). O cálculo do resumo está em `src/lib/progresso.ts`.
+- Usuários logados também acessam `/roadmaps`, mesmo sem o cookie da lista de espera.
 
 ### Rotas privadas
 
