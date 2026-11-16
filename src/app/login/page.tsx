@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { safeCallbackUrl } from "@/lib/callback-url";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { CompassIcon } from "@/components/layout/CompassIcon";
 
@@ -9,7 +12,15 @@ export const metadata: Metadata = {
   description: "Acesse sua conta na plataforma Bússola.dev.",
 };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: PageProps<"/login">) {
+  // Quem já está logado não precisa desta tela: segue para onde ia.
+  if (await getSession()) {
+    const { callbackUrl } = await searchParams;
+    redirect(safeCallbackUrl(typeof callbackUrl === "string" ? callbackUrl : null));
+  }
+
   return (
     <div className="flex flex-1 items-center justify-center px-gutter py-12">
       <div className="w-full max-w-sm">
