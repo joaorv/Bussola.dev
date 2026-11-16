@@ -65,3 +65,50 @@ model ProgressoTopico {
   @@unique([userId, roadmapId, topicId])
   @@index([userId])
 }
+
+// ---------------------------------------------------------------------------
+// Roadmaps (conteúdo das trilhas). Os ids são os slugs de src/data/roadmaps.json,
+// para o seed poder rodar de novo sem duplicar e as URLs ficarem estáveis.
+// ---------------------------------------------------------------------------
+
+model Roadmap {
+  id        String   @id // slug, ex.: "analista-de-dados"
+  titulo    String
+  descricao String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  etapas    Etapa[]
+}
+
+// Etapa da trilha (Fundamentos, Intermediário, ...), exibida na ordem de `ordem`.
+model Etapa {
+  id        String   @id
+  roadmapId String
+  nome      String
+  ordem     Int
+  roadmap   Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  topicos   Topico[]
+
+  @@index([roadmapId, ordem])
+}
+
+model Topico {
+  id        String      @id
+  etapaId   String
+  titulo    String
+  descricao String
+  nivel     NivelTopico
+  ordem     Int
+  // [{ tipo: "conceito" | "ferramenta" | "framework", nome: string }]
+  // Só é exibido, por isso fica em JSON em vez de tabela própria.
+  recursos  Json        @default("[]")
+  etapa     Etapa       @relation(fields: [etapaId], references: [id], onDelete: Cascade)
+
+  @@index([etapaId, ordem])
+}
+
+enum NivelTopico {
+  essencial
+  recomendado
+  opcional
+}

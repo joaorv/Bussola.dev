@@ -9,6 +9,8 @@ export default defineConfig({
 
   migrations: {
     path: "prisma/migrations",
+    // Popula os roadmaps a partir de src/data/roadmaps.json (npx prisma db seed).
+    seed: "tsx prisma/seed.ts",
   },
 
   datasource: {
