@@ -10,7 +10,9 @@ const ROADMAP_POR_AREA: Record<string, string> = {
   Frontend: "desenvolvedor-fullstack",
 };
 
-export function roadmapHrefForArea(area: string): string {
-  const id = ROADMAP_POR_AREA[area];
+// Com várias áreas marcadas, leva ao roadmap da primeira que tiver
+// correspondência (na ordem em que foram marcadas).
+export function roadmapHrefForAreas(areas: string[]): string {
+  const id = areas.map((area) => ROADMAP_POR_AREA[area]).find(Boolean);
   return id ? `/roadmaps/${id}` : "/roadmaps";
 }

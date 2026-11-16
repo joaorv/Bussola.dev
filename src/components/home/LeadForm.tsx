@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Toast } from "@/components/layout/Toast";
+import { AreasInteresseSelect } from "@/components/home/AreasInteresseSelect";
 import { PRIVACY_POLICY_HREF, TERMS_OF_USE_HREF } from "@/lib/legal";
 import {
   areaInteresseSchema,
@@ -11,12 +12,13 @@ import {
   emailSchema,
   nomeSchema,
 } from "@/lib/lead-validation";
-import { roadmapHrefForArea } from "@/lib/roadmap-areas";
+import { roadmapHrefForAreas } from "@/lib/roadmap-areas";
 
 const initialForm = {
   nome: "",
   email: "",
-  areaInteresse: "",
+  areasInteresse: [] as string[],
+  outroMarcado: false,
   outroInteresse: "",
   website: "",
   aceiteTermos: false,
@@ -43,11 +45,23 @@ export function LeadForm() {
     setForm((prev) => ({
       ...prev,
       [field]: value,
-      ...(field === "areaInteresse" && value !== "Outro" ? { outroInteresse: "" } : {}),
+      ...(field === "outroMarcado" && !value ? { outroInteresse: "" } : {}),
     }));
     if (erros[field]) {
       setErros((prev) => ({ ...prev, [field]: "" }));
     }
+    if (field === "outroMarcado" && erros.areasInteresse) {
+      setErros((prev) => ({ ...prev, areasInteresse: "" }));
+    }
+  }
+
+  function toggleArea(area: string, marcada: boolean) {
+    updateField(
+      "areasInteresse",
+      marcada
+        ? [...form.areasInteresse, area]
+        : form.areasInteresse.filter((a) => a !== area)
+    );
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -64,9 +78,9 @@ export function LeadForm() {
     if (!form.email.trim()) novosErros.email = "Digite seu e-mail.";
     else if (!valEmail.success) novosErros.email = "Digite um e-mail válido.";
 
-    if (!form.areaInteresse) {
-      novosErros.areaInteresse = "Selecione uma área de interesse.";
-    } else if (form.areaInteresse === "Outro") {
+    if (form.areasInteresse.length === 0 && !form.outroMarcado) {
+      novosErros.areasInteresse = "Selecione ao menos uma área de interesse.";
+    } else if (form.outroMarcado) {
       if (!form.outroInteresse.trim()) {
         novosErros.outroInteresse = "Digite sua área de interesse.";
       } else {
@@ -87,7 +101,9 @@ export function LeadForm() {
     setErros({});
     setEnviando(true);
 
-    const area = form.areaInteresse === "Outro" ? form.outroInteresse.trim() : form.areaInteresse;
+    const areas = form.outroMarcado
+      ? [...form.areasInteresse, form.outroInteresse.trim()]
+      : form.areasInteresse;
 
     try {
       const response = await fetch("/api/leads", {
@@ -96,7 +112,7 @@ export function LeadForm() {
         body: JSON.stringify({
           nome: form.nome.trim(),
           email: form.email.trim(),
-          areaInteresse: area,
+          areasInteresse: areas,
           website: form.website,
           aceiteTermos: form.aceiteTermos,
         }),
@@ -105,7 +121,7 @@ export function LeadForm() {
       // 409: o e-mail já está na lista. A API libera os roadmaps nos dois
       // casos, então quem volta em outro navegador também consegue entrar.
       if (response.status === 201 || response.status === 409) {
-        router.push(roadmapHrefForArea(area));
+        router.push(roadmapHrefForAreas(areas));
         return;
       }
 
@@ -171,26 +187,19 @@ export function LeadForm() {
             {erros.email && <p className="mt-1 text-sm text-red-400">{erros.email}</p>}
           </div>
 
-          <div>
-            <label htmlFor="areaInteresse" className="sr-only">Área de interesse</label>
-            <select
-              id="areaInteresse"
-              value={form.areaInteresse}
-              onChange={(e) => updateField("areaInteresse", e.target.value)}
-              className={`w-full rounded-md border bg-white p-3 text-black outline-none ${
-                erros.areaInteresse ? "border-red-500" : "border-white/20"
-              }`}
-            >
-              <option value="">Selecione sua área de interesse</option>
-              {areasPredefinidas.map((area) => (
-                <option key={area} value={area}>{area}</option>
-              ))}
-              <option value="Outro">Outro</option>
-            </select>
-            {erros.areaInteresse && <p className="mt-1 text-sm text-red-400">{erros.areaInteresse}</p>}
-          </div>
+          <AreasInteresseSelect
+            opcoes={[...areasPredefinidas, "Outro"]}
+            selecionadas={
+              form.outroMarcado ? [...form.areasInteresse, "Outro"] : form.areasInteresse
+            }
+            onToggle={(area, marcada) =>
+              area === "Outro" ? updateField("outroMarcado", marcada) : toggleArea(area, marcada)
+            }
+            rotulos={{ Outro: form.outroInteresse }}
+            erro={erros.areasInteresse}
+          />
 
-          {form.areaInteresse === "Outro" && (
+          {form.outroMarcado && (
             <div>
               <label htmlFor="outroInteresse" className="sr-only">Outra área de interesse</label>
               <input

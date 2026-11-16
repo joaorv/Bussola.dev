@@ -5,7 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { ratelimit } from "@/lib/rate-limit";
 import { setLeadCookie } from "@/lib/lead-access";
 import {
-  areaInteresseSchema,
+  areasInteresseSchema,
   emailSchema,
   nomeSchema,
 } from "@/lib/lead-validation";
@@ -13,7 +13,7 @@ import {
 const leadSchema = z.object({
   nome: nomeSchema,
   email: emailSchema,
-  areaInteresse: areaInteresseSchema,
+  areasInteresse: areasInteresseSchema,
   // Consentimento (LGPD): o cadastro só é aceito com os termos e a política aceitos.
   aceiteTermos: z.literal(true),
 });
@@ -53,14 +53,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { nome, email, areaInteresse } = resultado.data;
+    const { nome, email, areasInteresse } = resultado.data;
 
     try {
       const lead = await prisma.lead.create({
         data: {
           nome,
           email,
-          areaInteresse,
+          areasInteresse,
         },
       });
 

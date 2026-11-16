@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LAUNCH_DATE } from "@/lib/launch";
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-
-export const DEFAULT_LAUNCH_DATE =
-  process.env.NEXT_PUBLIC_LAUNCH_DATE ?? "2026-11-05T00:00:00-03:00";
 
 type CountdownProps = {
   target?: string;
@@ -17,7 +15,7 @@ type CountdownProps = {
 };
 
 export function Countdown({
-  target = DEFAULT_LAUNCH_DATE,
+  target = LAUNCH_DATE,
   label,
   className,
 }: CountdownProps) {
