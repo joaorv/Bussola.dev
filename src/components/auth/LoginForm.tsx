@@ -8,7 +8,13 @@ import Link from "next/link";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  // Só aceita caminhos internos ("/perfil"), para o parâmetro não virar um
+  // redirecionamento para outro site ("https://..." ou "//...").
+  const callbackParam = searchParams.get("callbackUrl");
+  const callbackUrl =
+    callbackParam?.startsWith("/") && !callbackParam.startsWith("//")
+      ? callbackParam
+      : "/";
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

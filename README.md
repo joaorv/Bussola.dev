@@ -120,6 +120,12 @@ A configuração fica em [`src/lib/auth.ts`](src/lib/auth.ts), e as rotas do Nex
 - **Página de login:** configurada como `/login`, que **ainda não existe**.
 - **Cadastro:** **ainda não existe**. Quando for criado, o hash precisa usar o mesmo `BCRYPT_COST` exportado de `src/lib/auth.ts`.
 
+### Rotas privadas
+
+O [`src/proxy.ts`](src/proxy.ts) (o antigo `middleware.ts`, renomeado no Next 16) bloqueia quem não está logado em `/perfil` e `/trilha` (e nas subrotas delas). Quem chega sem sessão é redirecionado para `/login?callbackUrl=<página>`, e depois do login volta para a página que tentou abrir. Para proteger outra rota, adicione-a ao `matcher` do arquivo.
+
+Essa checagem só confere o JWT do cookie. Páginas e APIs que leem dados do usuário devem continuar usando `getSession()`.
+
 Para ler a sessão no servidor (Server Components, Route Handlers e Server Actions):
 
 ```ts
