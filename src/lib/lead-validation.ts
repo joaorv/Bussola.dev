@@ -41,3 +41,12 @@ export const areaInteresseSchema = z
       /^[\p{L}\p{M}0-9][\p{L}\p{M}0-9 .+#&/'-]*$/u.test(valor),
     "Área de interesse inválida"
   );
+
+export const MAX_AREAS_INTERESSE = 10;
+
+export const areasInteresseSchema = z
+  .array(areaInteresseSchema)
+  .min(1, "Selecione ao menos uma área de interesse")
+  .max(MAX_AREAS_INTERESSE, "Áreas de interesse demais")
+  // remove repetidas (ex.: "Outro" preenchido com uma área que já foi marcada)
+  .transform((areas) => [...new Set(areas)]);

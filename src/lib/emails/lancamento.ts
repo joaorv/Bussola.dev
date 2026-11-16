@@ -4,7 +4,7 @@
 
 type DadosLancamento = {
   nome: string;
-  areaInteresse: string;
+  areasInteresse: string[];
   siteUrl: string;
 };
 
@@ -27,9 +27,17 @@ function escaparHtml(valor: string) {
     .replace(/'/g, "&#39;");
 }
 
-export function emailLancamento({ nome, areaInteresse, siteUrl }: DadosLancamento) {
+// ["Backend", "DevOps", "Dados e IA"] -> "Backend, DevOps e Dados e IA"
+function juntarAreas(areas: string[]) {
+  if (areas.length === 0) return "tecnologia";
+  if (areas.length === 1) return areas[0];
+  return `${areas.slice(0, -1).join(", ")} e ${areas[areas.length - 1]}`;
+}
+
+export function emailLancamento({ nome, areasInteresse, siteUrl }: DadosLancamento) {
   const primeiroNome = nome.trim().split(/\s+/)[0];
   const nomeHtml = escaparHtml(primeiroNome);
+  const areaInteresse = juntarAreas(areasInteresse);
   const areaHtml = escaparHtml(areaInteresse);
   const privacidadeUrl = `${siteUrl}/privacidade`;
 

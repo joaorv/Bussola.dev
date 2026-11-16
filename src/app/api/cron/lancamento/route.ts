@@ -26,10 +26,10 @@ function urlDoSite() {
   return (process.env.NEXTAUTH_URL ?? "https://bussola-dev.vercel.app").replace(/\/$/, "");
 }
 
-async function enviar(para: string, nome: string, areaInteresse: string) {
+async function enviar(para: string, nome: string, areasInteresse: string[]) {
   const { assunto, texto, html } = emailLancamento({
     nome,
-    areaInteresse,
+    areasInteresse,
     siteUrl: urlDoSite(),
   });
 
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
   const emailTeste = searchParams.get("para");
   if (emailTeste) {
     try {
-      await enviar(emailTeste, "Fulano de Tal", "Desenvolvimento Web");
+      await enviar(emailTeste, "Fulano de Tal", ["Desenvolvimento Web", "Backend"]);
       return NextResponse.json({ status: "teste enviado", para: emailTeste });
     } catch (error) {
       console.error("Erro ao enviar e-mail de teste:", error);
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
   const leads = await prisma.lead.findMany({
     where: { emailLancamentoEnviadoEm: null },
     orderBy: { id: "asc" },
-    select: { id: true, nome: true, email: true, areaInteresse: true },
+    select: { id: true, nome: true, email: true, areasInteresse: true },
   });
 
   const inicio = Date.now();
@@ -90,7 +90,7 @@ export async function GET(request: Request) {
     while (proximo < leads.length && Date.now() - inicio < TEMPO_LIMITE_MS) {
       const lead = leads[proximo++];
       try {
-        await enviar(lead.email, lead.nome, lead.areaInteresse);
+        await enviar(lead.email, lead.nome, lead.areasInteresse);
         await prisma.lead.update({
           where: { id: lead.id },
           data: { emailLancamentoEnviadoEm: new Date() },

@@ -160,7 +160,7 @@ Com credenciais erradas, a sessão volta vazia (`{}`).
 
 | Rota | Método | Descrição |
 | --- | --- | --- |
-| `/api/leads` | `POST` | Cadastra um lead da lista de espera (`nome`, `email`, `areaInteresse` e `aceiteTermos`, que precisa ser `true`). Tem rate limit de 5 requisições por minuto por IP. |
+| `/api/leads` | `POST` | Cadastra um lead da lista de espera (`nome`, `email`, `areasInteresse` — lista com ao menos uma área — e `aceiteTermos`, que precisa ser `true`). Tem rate limit de 5 requisições por minuto por IP. |
 | `/api/auth/*` | `GET`/`POST` | Rotas do NextAuth (signin, callback, session, csrf, signout). |
 
 ## Estrutura
