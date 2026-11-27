@@ -9,6 +9,7 @@ import { resumirProgresso, type ResumoProgresso } from "@/lib/progresso";
 import { LevelBadge } from "@/components/roadmap/LevelBadge";
 import { Avatar } from "@/components/perfil/Avatar";
 import { fotoUrl, perfilSelect } from "@/lib/perfil";
+import { formatarLocal } from "@/lib/regioes";
 
 export const metadata: Metadata = {
   title: "Meu perfil | Bússola.dev",
@@ -49,6 +50,8 @@ export default async function PerfilPage() {
   if (!user) {
     notFound();
   }
+
+  const local = formatarLocal(user.cidade, user.estado);
 
   // Resumo de cada roadmap em que a pessoa já concluiu algo.
   const resumos = getRoadmaps()
@@ -101,7 +104,7 @@ export default async function PerfilPage() {
               <p className="mt-1 text-lg text-white/90">{user.profissao}</p>
             )}
             <p className="mt-1 truncate text-white/70">
-              {user.localizacao && <>{user.localizacao} · </>}
+              {local && <>{local} · </>}
               {user.email}
             </p>
             <p className="mt-1 text-sm text-white/50">

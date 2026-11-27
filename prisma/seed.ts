@@ -1,4 +1,5 @@
-// Popula as tabelas de roadmap a partir de src/data/roadmaps.json.
+// Popula as tabelas de roadmap a partir de src/data/roadmaps.json e o conteúdo
+// regional a partir de src/data/conteudo-regional.json.
 //
 // Idempotente: usa os slugs do JSON como id, então rodar de novo atualiza o
 // que mudou em vez de duplicar. Etapas e tópicos que saíram do JSON são
@@ -9,7 +10,13 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, NivelTopico } from "../src/generated/prisma/client";
+import {
+  Modalidade,
+  NivelTopico,
+  PrismaClient,
+  TipoConteudoRegional,
+} from "../src/generated/prisma/client";
+import { ehUF } from "../src/lib/regioes";
 
 type RoadmapJson = {
   id: string;
@@ -104,6 +111,66 @@ async function main() {
     where: { id: { notIn: roadmaps.map((r) => r.id) } },
   });
   if (count > 0) console.log(`✓ ${count} roadmap(s) removido(s)`);
+
+  await semearConteudoRegional(new Set(roadmaps.map((r) => r.id)));
+}
+
+type ConteudoRegionalJson = {
+  id: string;
+  tipo: TipoConteudoRegional;
+  titulo: string;
+  descricao: string;
+  url: string | null;
+  modalidade: Modalidade;
+  estado: string | null;
+  cidade: string | null;
+  gratuito: boolean | null;
+  inicioEm?: string | null;
+  fimEm?: string | null;
+  ativo?: boolean;
+  roadmaps: string[];
+};
+
+// Cria ou atualiza os itens do JSON (o id do JSON é o id no banco). Itens
+// cadastrados por fora do JSON não são tocados; para tirar um item do JSON do
+// ar, use "ativo": false em vez de apagá-lo do arquivo.
+async function semearConteudoRegional(roadmapIds: Set<string>) {
+  const arquivo = join(__dirname, "..", "src", "data", "conteudo-regional.json");
+  const { conteudos } = JSON.parse(readFileSync(arquivo, "utf-8")) as {
+    conteudos: ConteudoRegionalJson[];
+  };
+
+  for (const item of conteudos) {
+    if (!(item.tipo in TipoConteudoRegional)) throw new Error(`${item.id}: tipo inválido`);
+    if (!(item.modalidade in Modalidade)) throw new Error(`${item.id}: modalidade inválida`);
+    if (item.estado !== null && !ehUF(item.estado)) throw new Error(`${item.id}: UF inválida`);
+    if (item.cidade && !item.estado) throw new Error(`${item.id}: cidade sem estado`);
+    const desconhecido = item.roadmaps.find((id) => !roadmapIds.has(id));
+    if (desconhecido) throw new Error(`${item.id}: roadmap "${desconhecido}" não existe`);
+
+    const dados = {
+      tipo: item.tipo,
+      titulo: item.titulo,
+      descricao: item.descricao,
+      url: item.url,
+      modalidade: item.modalidade,
+      estado: item.estado,
+      cidade: item.cidade,
+      gratuito: item.gratuito,
+      inicioEm: item.inicioEm ? new Date(item.inicioEm) : null,
+      fimEm: item.fimEm ? new Date(item.fimEm) : null,
+      ativo: item.ativo ?? true,
+    };
+    const roadmaps = item.roadmaps.map((id) => ({ id }));
+
+    await prisma.conteudoRegional.upsert({
+      where: { id: item.id },
+      create: { id: item.id, ...dados, roadmaps: { connect: roadmaps } },
+      update: { ...dados, roadmaps: { set: roadmaps } },
+    });
+  }
+
+  console.log(`✓ conteúdo regional: ${conteudos.length} itens`);
 }
 
 main()

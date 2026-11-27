@@ -21,7 +21,11 @@ import {
   TopicoCheck,
   TrilhaProgressoProvider,
 } from "@/components/roadmap/TrilhaProgresso";
+import { PertoDeVoce } from "@/components/regional/PertoDeVoce";
 import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { buscarConteudoRegional } from "@/lib/conteudo-regional";
+import { formatarLocal } from "@/lib/regioes";
 
 export function generateStaticParams() {
   return getRoadmaps().map((roadmap) => ({ id: roadmap.id }));
@@ -51,11 +55,25 @@ export default async function RoadmapPage({
   // Quem tem conta marca o progresso; quem só fez o pré-cadastro vê a trilha
   // sem os checks. Os dados são os mesmos de GET /api/roadmaps/[id]/etapas.
   const userId = (await getSession())?.user?.id ?? null;
-  const trilha = await carregarTrilha(id, userId);
+  const [trilha, regiao] = await Promise.all([
+    carregarTrilha(id, userId),
+    userId
+      ? prisma.user.findUnique({ where: { id: userId }, select: { estado: true, cidade: true } })
+      : null,
+  ]);
 
   if (!trilha) {
     notFound();
   }
+
+  const estado = regiao?.estado ?? null;
+  const cidade = regiao?.cidade ?? null;
+  const conteudosRegionais = await buscarConteudoRegional({
+    estado,
+    cidade,
+    roadmapId: trilha.roadmapId,
+    limite: 9,
+  });
 
   const todosOsTopicos = trilha.etapas.flatMap(idsDaEtapa);
   const concluidos = trilha.etapas.flatMap((etapa) =>
@@ -245,6 +263,13 @@ export default async function RoadmapPage({
           })}
         </ol>
       </div>
+
+      <PertoDeVoce
+        conteudos={conteudosRegionais}
+        local={estado ? formatarLocal(cidade, estado) : null}
+        logado={!!userId}
+        callbackUrl={`/roadmaps/${trilha.roadmapId}`}
+      />
     </TrilhaProgressoProvider>
   );
 }

@@ -10,19 +10,22 @@ import {
   githubUrlSchema,
   linkedinUrlSchema,
   LINK_MAX,
-  LOCALIZACAO_MAX,
-  localizacaoSchema,
+  CIDADE_MAX,
+  cidadeSchema,
+  estadoSchema,
   PROFISSAO_MAX,
   profissaoSchema,
   siteUrlSchema,
   SOBRE_MAX,
   sobreSchema,
 } from "@/lib/perfil-validation";
+import { UFS } from "@/lib/regioes";
 
 export type PerfilFormValores = {
   nome: string;
   profissao: string;
-  localizacao: string;
+  cidade: string;
+  estado: string;
   sobre: string;
   linkedinUrl: string;
   githubUrl: string;
@@ -37,7 +40,8 @@ type Erros = Partial<Record<Campo, string>>;
 const schemas: Record<CampoTexto, z.ZodType> = {
   nome: nomeSchema,
   profissao: profissaoSchema,
-  localizacao: localizacaoSchema,
+  cidade: cidadeSchema,
+  estado: estadoSchema,
   sobre: sobreSchema,
   linkedinUrl: linkedinUrlSchema,
   githubUrl: githubUrlSchema,
@@ -53,6 +57,11 @@ function validar(form: PerfilFormValores): Erros {
     if (erros[campo]) continue;
     const resultado = schemas[campo].safeParse(form[campo]);
     if (!resultado.success) erros[campo] = resultado.error.issues[0].message;
+  }
+
+  // Sem a UF não dá para achar conteúdo perto da pessoa.
+  if (form.cidade.trim() && !form.estado && !erros.estado) {
+    erros.estado = "Escolha o estado da sua cidade.";
   }
 
   if (form.areasInteresse.length > MAX_AREAS_INTERESSE) {
@@ -164,7 +173,9 @@ export function EditarPerfilForm({ inicial }: { inicial: PerfilFormValores }) {
     return {
       id: campo,
       value: form[campo],
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      onChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+      ) =>
         atualizar(campo, e.target.value),
       className: `${inputBase} ${erros[campo] ? "border-red-500" : "border-border"}`,
       "aria-invalid": erros[campo] ? true : undefined,
@@ -216,16 +227,33 @@ export function EditarPerfilForm({ inicial }: { inicial: PerfilFormValores }) {
           {campoErro("profissao")}
         </div>
 
-        <div>
-          {rotulo("localizacao", "Localização")}
-          <input
-            type="text"
-            autoComplete="address-level2"
-            maxLength={LOCALIZACAO_MAX}
-            placeholder="Ex.: São Paulo, SP"
-            {...props("localizacao")}
-          />
-          {campoErro("localizacao")}
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
+          <div>
+            {rotulo("cidade", "Cidade")}
+            <input
+              type="text"
+              autoComplete="address-level2"
+              maxLength={CIDADE_MAX}
+              placeholder="Ex.: Campinas"
+              {...props("cidade")}
+            />
+            {campoErro("cidade")}
+          </div>
+          <div>
+            {rotulo("estado", "Estado")}
+            <select autoComplete="address-level1" {...props("estado")}>
+              <option value="">Selecione</option>
+              {UFS.map((uf) => (
+                <option key={uf.sigla} value={uf.sigla}>
+                  {uf.nome} ({uf.sigla})
+                </option>
+              ))}
+            </select>
+            {campoErro("estado")}
+          </div>
+          <p className="-mt-2 text-xs text-muted sm:col-span-2">
+            Usamos sua cidade para mostrar cursos, eventos, empresas e comunidades perto de você.
+          </p>
         </div>
 
         <div>

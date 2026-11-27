@@ -31,6 +31,12 @@ model User {
   // Perfil público-profissional, editado em /perfil/editar. Todos opcionais:
   // null = a pessoa não preencheu ou apagou o campo.
   profissao   String?
+  // Localização em campos separados para cruzar com o conteúdo regional.
+  // `estado` é a UF ("SP"); `cidade` como a pessoa digitou ("Campinas").
+  cidade      String?
+  estado      String?
+  // Legado (texto livre), substituído por cidade/estado e não usado pelo app.
+  // Fica até a próxima migration para não quebrar a versão já publicada.
   localizacao String?
   sobre       String?
   linkedinUrl String?
@@ -78,6 +84,8 @@ model Roadmap {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   etapas    Etapa[]
+
+  conteudosRegionais ConteudoRegional[]
 }
 
 // Etapa da trilha (Fundamentos, Intermediário, ...), exibida na ordem de `ordem`.
@@ -111,4 +119,57 @@ enum NivelTopico {
   essencial
   recomendado
   opcional
+}
+
+// ---------------------------------------------------------------------------
+// Conteúdo regional: o que existe perto da pessoa para ela avançar na trilha
+// (cursos, empresas, eventos e comunidades). Cada item tem uma região e se
+// liga às trilhas em que faz sentido, para o app mostrar "perto de você" o que
+// combina com o que ela estuda.
+// ---------------------------------------------------------------------------
+
+model ConteudoRegional {
+  id         String               @id @default(cuid())
+  tipo       TipoConteudoRegional
+  titulo     String
+  descricao  String
+  url        String?
+  modalidade Modalidade           @default(presencial)
+
+  // Região. `estado` é a UF em maiúsculas ("SP"); `cidade` null = vale para o
+  // estado todo; os dois null = nacional (ex.: curso ou comunidade online).
+  estado String?
+  cidade String?
+
+  // null = não informado.
+  gratuito Boolean?
+
+  // Período, para eventos e turmas de curso. Fora disso, ficam null.
+  inicioEm DateTime?
+  fimEm    DateTime?
+
+  // Esconde o item sem apagar (evento cancelado, empresa que fechou...).
+  ativo Boolean @default(true)
+
+  // Trilhas relacionadas. Vazio = serve para qualquer trilha.
+  roadmaps Roadmap[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([estado, cidade])
+  @@index([tipo])
+}
+
+enum TipoConteudoRegional {
+  curso
+  empresa
+  evento
+  comunidade
+}
+
+enum Modalidade {
+  presencial
+  online
+  hibrido
 }

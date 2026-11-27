@@ -44,7 +44,8 @@ export default async function EditarPerfilPage() {
         inicial={{
           nome: user.nome,
           profissao: user.profissao ?? "",
-          localizacao: user.localizacao ?? "",
+          cidade: user.cidade ?? "",
+          estado: user.estado ?? "",
           sobre: user.sobre ?? "",
           linkedinUrl: user.linkedinUrl ?? "",
           githubUrl: user.githubUrl ?? "",

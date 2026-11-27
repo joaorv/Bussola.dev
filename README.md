@@ -91,7 +91,7 @@ O `postinstall` roda `prisma generate`, que gera o client em `src/generated/pris
 npx prisma migrate deploy
 ```
 
-Esse comando cria as tabelas `Lead`, `User`, `ProgressoTopico`, `Roadmap`, `Etapa` e `Topico` no banco do `DATABASE_URL`. Na Vercel isso é automático: o script `vercel-build` roda `prisma migrate deploy` antes do `next build`, só nos deploys de produção. Se você for **alterar o schema**, use `npx prisma migrate dev --name descricao-da-mudanca`, que gera uma migration nova.
+Esse comando cria as tabelas `Lead`, `User`, `ProgressoTopico`, `Roadmap`, `Etapa`, `Topico` e `ConteudoRegional` no banco do `DATABASE_URL`. Na Vercel isso é automático: o script `vercel-build` roda `prisma migrate deploy` antes do `next build`, só nos deploys de produção. Se você for **alterar o schema**, use `npx prisma migrate dev --name descricao-da-mudanca`, que gera uma migration nova.
 
 ### 4.1. Popular os roadmaps
 

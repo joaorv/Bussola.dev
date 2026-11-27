@@ -4,12 +4,13 @@ import {
   MAX_AREAS_INTERESSE,
   nomeSchema,
 } from "@/lib/lead-validation";
+import { ehUF } from "@/lib/regioes";
 
 // Regras do perfil editável, compartilhadas pelo formulário de /perfil/editar
 // e pela API (PATCH /api/perfil), para as duas pontas validarem do mesmo jeito.
 
 export const PROFISSAO_MAX = 120;
-export const LOCALIZACAO_MAX = 100;
+export const CIDADE_MAX = 100;
 export const SOBRE_MAX = 2000;
 export const LINK_MAX = 300;
 
@@ -80,7 +81,12 @@ function linkOpcional(dominio?: { host: string; nome: string }) {
 }
 
 export const profissaoSchema = textoOpcional(PROFISSAO_MAX, "A profissão");
-export const localizacaoSchema = textoOpcional(LOCALIZACAO_MAX, "A localização");
+export const cidadeSchema = textoOpcional(CIDADE_MAX, "A cidade");
+// UF em maiúsculas ("SP"); "" ou null apagam.
+export const estadoSchema = z
+  .union([z.string(), z.null()])
+  .transform((v) => v?.trim().toUpperCase() || null)
+  .refine((v) => v === null || ehUF(v), "Escolha um estado da lista");
 export const sobreSchema = textoOpcional(SOBRE_MAX, "O texto", true);
 export const linkedinUrlSchema = linkOpcional({ host: "linkedin.com", nome: "LinkedIn" });
 export const githubUrlSchema = linkOpcional({ host: "github.com", nome: "GitHub" });
@@ -100,7 +106,8 @@ export const perfilUpdateSchema = z
   .object({
     nome: nomeSchema,
     profissao: profissaoSchema,
-    localizacao: localizacaoSchema,
+    cidade: cidadeSchema,
+    estado: estadoSchema,
     sobre: sobreSchema,
     linkedinUrl: linkedinUrlSchema,
     githubUrl: githubUrlSchema,
