@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import {
@@ -213,8 +214,46 @@ export async function carregarTrilha(id: string, userId: string | null): Promise
   };
 }
 
-// Confere se o tópico pertence ao roadmap (os ids da action vêm do navegador).
-export async function topicoExiste(roadmapId: string, topicId: string): Promise<boolean> {
+async function topicoExiste(roadmapId: string, topicId: string): Promise<boolean> {
   const roadmap = await buscarRoadmap(roadmapId);
   return !!roadmap?.etapas.some((etapa) => etapa.topicos.some((t) => t.id === topicId));
+}
+
+export type ProgressoSalvo = {
+  roadmapId: string;
+  topicId: string;
+  concluido: boolean;
+  concluidoEm: Date | null;
+};
+
+// Marca (concluido = true) ou desmarca um tópico para o usuário. Usada pela
+// API /api/roadmaps/[id]/topicos/[topicId]/progresso e pela Server Action do
+// checkbox da trilha. Retorna null se o tópico não pertence ao roadmap (os ids
+// vêm do cliente). Marcar de novo mantém a data da primeira conclusão.
+export async function salvarProgressoTopico(
+  userId: string,
+  roadmapId: string,
+  topicId: string,
+  concluido: boolean
+): Promise<ProgressoSalvo | null> {
+  if (!(await topicoExiste(roadmapId, topicId))) return null;
+
+  let concluidoEm: Date | null = null;
+
+  if (concluido) {
+    const registro = await prisma.progressoTopico.upsert({
+      where: { userId_roadmapId_topicId: { userId, roadmapId, topicId } },
+      create: { userId, roadmapId, topicId },
+      update: {},
+      select: { concluidoEm: true },
+    });
+    concluidoEm = registro.concluidoEm;
+  } else {
+    await prisma.progressoTopico.deleteMany({ where: { userId, roadmapId, topicId } });
+  }
+
+  revalidatePath(`/roadmaps/${roadmapId}`);
+  revalidatePath("/perfil");
+
+  return { roadmapId, topicId, concluido, concluidoEm };
 }
