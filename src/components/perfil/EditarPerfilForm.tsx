@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { z } from "zod";
 import { areasPredefinidas, MAX_AREAS_INTERESSE, nomeSchema } from "@/lib/lead-validation";
+import { avisarPerfilAtualizado } from "@/lib/perfil-eventos";
 import {
   githubUrlSchema,
   linkedinUrlSchema,
@@ -116,6 +117,7 @@ export function EditarPerfilForm({ inicial }: { inicial: PerfilFormValores }) {
       });
 
       if (res.ok) {
+        avisarPerfilAtualizado();
         router.push("/perfil");
         router.refresh();
         return;

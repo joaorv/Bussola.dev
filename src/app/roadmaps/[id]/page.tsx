@@ -8,9 +8,19 @@ import {
   RECURSO_LABELS,
   buscarRoadmap,
   carregarTrilha,
+  type EtapaTrilha,
 } from "@/lib/trilha";
 import { LevelBadge } from "@/components/roadmap/LevelBadge";
-import { TopicoCheck } from "@/components/roadmap/TopicoCheck";
+import {
+  CardTopico,
+  ChecklistEtapa,
+  ContadorEtapa,
+  MarcadorEtapa,
+  ProgressoGeral,
+  SeloEtapaSumario,
+  TopicoCheck,
+  TrilhaProgressoProvider,
+} from "@/components/roadmap/TrilhaProgresso";
 import { getSession } from "@/lib/auth";
 
 export function generateStaticParams() {
@@ -30,6 +40,8 @@ export async function generateMetadata({
 
 const LEVELS = Object.keys(LEVEL_LABELS) as TopicLevel[];
 
+const idsDaEtapa = (etapa: EtapaTrilha) => etapa.topicos.map((t) => t.id);
+
 export default async function RoadmapPage({
   params,
 }: PageProps<"/roadmaps/[id]">) {
@@ -45,8 +57,13 @@ export default async function RoadmapPage({
     notFound();
   }
 
+  const todosOsTopicos = trilha.etapas.flatMap(idsDaEtapa);
+  const concluidos = trilha.etapas.flatMap((etapa) =>
+    etapa.topicos.filter((t) => t.concluido).map((t) => t.id)
+  );
+
   return (
-    <>
+    <TrilhaProgressoProvider roadmapId={trilha.roadmapId} concluidos={concluidos}>
       <section
         aria-labelledby="roadmap-title"
         className="bg-night px-gutter py-section-sm text-white"
@@ -70,27 +87,7 @@ export default async function RoadmapPage({
           </p>
 
           {userId ? (
-            <div className="mt-6 max-w-md">
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="text-white/70">Seu progresso</span>
-                <span className="tabular-nums text-white">
-                  {trilha.topicosConcluidos}/{trilha.totalTopicos} · {trilha.percentual}%
-                </span>
-              </div>
-              <div
-                role="progressbar"
-                aria-label="Seu progresso nesta trilha"
-                aria-valuemin={0}
-                aria-valuemax={trilha.totalTopicos}
-                aria-valuenow={trilha.topicosConcluidos}
-                className="mt-2 h-2 overflow-hidden rounded-full bg-night-line"
-              >
-                <div
-                  className="h-full rounded-full bg-success"
-                  style={{ width: `${trilha.percentual}%` }}
-                />
-              </div>
-            </div>
+            <ProgressoGeral topicIds={todosOsTopicos} />
           ) : (
             <p className="mt-6 text-sm text-white/70">
               <Link
@@ -128,11 +125,7 @@ export default async function RoadmapPage({
                     <span>
                       {etapa.ordem}. {etapa.nome}
                     </span>
-                    {etapa.concluida && (
-                      <span className="text-success" aria-label="Etapa concluída">
-                        ✓
-                      </span>
-                    )}
+                    <SeloEtapaSumario topicIds={idsDaEtapa(etapa)} />
                   </a>
                 </li>
               ))}
@@ -152,69 +145,18 @@ export default async function RoadmapPage({
         </aside>
 
         <ol className="min-w-0">
-          {trilha.etapas.map((etapa, index) => (
-            <li
-              key={etapa.id}
-              id={etapa.id}
-              className="relative scroll-mt-6 pb-12 pl-12 last:pb-0"
-            >
-              {/* trilha ligando as etapas */}
-              {index < trilha.etapas.length - 1 ? (
-                <span
-                  aria-hidden="true"
-                  className="absolute top-9 bottom-0 left-4 w-px bg-border"
-                />
-              ) : null}
-              <span
-                aria-hidden="true"
-                className={`absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white ${
-                  etapa.concluida ? "bg-success" : "bg-brand"
-                }`}
-              >
-                {etapa.concluida ? "✓" : etapa.ordem}
-              </span>
-
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-                  {etapa.nome}
-                </h2>
-                {userId && (
-                  <p
-                    className={`text-sm tabular-nums ${
-                      etapa.concluida
-                        ? "font-medium text-success-active dark:text-success-hover"
-                        : "text-muted"
-                    }`}
-                  >
-                    {etapa.concluida
-                      ? "Etapa concluída"
-                      : `${etapa.topicosConcluidos}/${etapa.totalTopicos} concluídos`}
-                  </p>
-                )}
-              </div>
-
-              <ol className="mt-6 flex flex-col gap-4">
+          {trilha.etapas.map((etapa, index) => {
+            const cards = (
+              <ol className="mt-4 flex flex-col gap-4">
                 {etapa.topicos.map((topico) => (
-                  <li
-                    key={topico.id}
-                    className={`rounded-lg border bg-surface p-card ${
-                      topico.concluido ? "border-success/40" : "border-border"
-                    }`}
-                  >
+                  <CardTopico key={topico.id} topicId={topico.id}>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <h3 className="text-base font-semibold text-foreground">
                         {topico.titulo}
                       </h3>
                       <div className="flex flex-wrap items-center gap-2">
                         <LevelBadge level={NIVEL_PARA_LEVEL[topico.nivel]} />
-                        {userId && (
-                          <TopicoCheck
-                            roadmapId={trilha.roadmapId}
-                            topicId={topico.id}
-                            titulo={topico.titulo}
-                            concluido={topico.concluido}
-                          />
-                        )}
+                        {userId && <TopicoCheck topicId={topico.id} titulo={topico.titulo} />}
                       </div>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-(--color-ink-700)">
@@ -235,13 +177,74 @@ export default async function RoadmapPage({
                         ))}
                       </ul>
                     )}
-                  </li>
+                  </CardTopico>
                 ))}
               </ol>
-            </li>
-          ))}
+            );
+
+            return (
+              <li
+                key={etapa.id}
+                id={etapa.id}
+                className="relative scroll-mt-24 pb-12 pl-12 last:pb-0"
+              >
+                {/* trilha ligando as etapas */}
+                {index < trilha.etapas.length - 1 ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-9 bottom-0 left-4 w-px bg-border"
+                  />
+                ) : null}
+                <MarcadorEtapa ordem={etapa.ordem} topicIds={idsDaEtapa(etapa)} />
+
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                    {etapa.nome}
+                  </h2>
+                  {userId && <ContadorEtapa topicIds={idsDaEtapa(etapa)} />}
+                </div>
+
+                {userId ? (
+                  <>
+                    <ChecklistEtapa
+                      etapaId={etapa.id}
+                      etapaNome={etapa.nome}
+                      topicos={etapa.topicos.map((t) => ({
+                        id: t.id,
+                        titulo: t.titulo,
+                        level: NIVEL_PARA_LEVEL[t.nivel],
+                      }))}
+                    />
+                    {/* descrições e recursos ficam recolhidos: o checklist já
+                        mostra os tópicos e dá para marcar por ele */}
+                    <details className="group mt-4">
+                      <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-brand transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden">
+                        <svg
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                          className="h-4 w-4 transition-transform group-open:rotate-90"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M7.21 14.77a.75.75 0 01.02-1.06L11.17 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="group-open:hidden">Ver detalhes dos tópicos</span>
+                        <span className="hidden group-open:inline">Ocultar detalhes</span>
+                      </summary>
+                      {cards}
+                    </details>
+                  </>
+                ) : (
+                  <div className="mt-2">{cards}</div>
+                )}
+              </li>
+            );
+          })}
         </ol>
       </div>
-    </>
+    </TrilhaProgressoProvider>
   );
 }

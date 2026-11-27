@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "./Avatar";
 import { Toast } from "@/components/layout/Toast";
 import { FOTO_MAX_BYTES } from "@/lib/perfil-validation";
+import { avisarPerfilAtualizado } from "@/lib/perfil-eventos";
 
 // Lado da foto salva. Suficiente para o maior avatar da aplicação em telas
 // de alta densidade, e deixa o arquivo com poucas dezenas de KB.
@@ -101,6 +102,7 @@ export function FotoPerfilEditor({
 
       setFotoUrl(corpo.fotoUrl);
       setAviso({ type: "sucesso", title: "Foto atualizada", description: "Sua nova foto já aparece no perfil." });
+      avisarPerfilAtualizado();
       router.refresh();
     } catch {
       erro("Erro de conexão. Tente novamente.");
@@ -122,6 +124,7 @@ export function FotoPerfilEditor({
 
       setFotoUrl(null);
       setAviso({ type: "sucesso", title: "Foto removida", description: "O perfil volta a mostrar suas iniciais." });
+      avisarPerfilAtualizado();
       router.refresh();
     } catch {
       erro("Erro de conexão. Tente novamente.");

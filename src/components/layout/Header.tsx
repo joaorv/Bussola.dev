@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { CompassIcon } from "./CompassIcon";
 import { iniciais } from "@/components/perfil/Avatar";
+import { PERFIL_ATUALIZADO } from "@/lib/perfil-eventos";
 import { scrollToAnchor, scrollToTop } from "@/lib/scroll";
 
 // Visitante: links da landing + "Entrar" + botão "Criar conta".
@@ -30,6 +31,9 @@ export function Header() {
   const pathname = usePathname();
   const logado = status === "authenticated";
   const usuario = session?.user;
+  const perfil = usePerfilResumo(logado);
+  const nome = perfil?.nome ?? usuario?.name ?? "";
+  const fotoUrl = perfil?.fotoUrl ?? null;
 
   const ativo = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -70,7 +74,7 @@ export function Header() {
                 ))}
               </nav>
               <div className="hidden sm:block">
-                <MenuUsuario nome={usuario?.name ?? ""} email={usuario?.email ?? ""} />
+                <MenuUsuario nome={nome} email={usuario?.email ?? ""} fotoUrl={fotoUrl} />
               </div>
             </>
           ) : (
@@ -136,9 +140,9 @@ export function Header() {
           {logado ? (
             <>
               <div className="flex items-center gap-3 border-b border-border pb-4">
-                <FotoUsuario nome={usuario?.name ?? ""} />
+                <FotoUsuario nome={nome} fotoUrl={fotoUrl} />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">{usuario?.name}</p>
+                  <p className="truncate text-sm font-semibold text-foreground">{nome}</p>
                   <p className="truncate text-xs text-muted">{usuario?.email}</p>
                 </div>
               </div>
@@ -201,38 +205,74 @@ export function Header() {
   );
 }
 
-// Foto do perfil; sem foto (a rota responde 404) mostra as iniciais. A sessão
-// não guarda a versão da foto, então a URL vai sem ?v= e o navegador sempre
-// confere se mudou.
-function FotoUsuario({ nome }: { nome: string }) {
-  const [semFoto, setSemFoto] = useState(false);
+type PerfilResumo = { nome: string; fotoUrl: string | null };
+
+// Nome e foto atuais do usuário, lidos de /api/perfil (a sessão guarda só o
+// nome do momento do login e não sabe da foto). Busca de novo quando a tela
+// de perfil avisa que algo mudou.
+function usePerfilResumo(logado: boolean) {
+  const [perfil, setPerfil] = useState<PerfilResumo | null>(null);
+
+  useEffect(() => {
+    if (!logado) return;
+    let ativo = true;
+
+    async function carregar() {
+      try {
+        const res = await fetch("/api/perfil", { cache: "no-store" });
+        if (!res.ok) return;
+        const dados = await res.json();
+        if (ativo) setPerfil({ nome: dados.nome, fotoUrl: dados.fotoUrl ?? null });
+      } catch {
+        // Sem rede: continua com o nome da sessão e as iniciais.
+      }
+    }
+
+    carregar();
+    window.addEventListener(PERFIL_ATUALIZADO, carregar);
+    return () => {
+      ativo = false;
+      window.removeEventListener(PERFIL_ATUALIZADO, carregar);
+    };
+  }, [logado]);
+
+  return logado ? perfil : null;
+}
+
+// Foto do perfil ou, sem foto, as iniciais do nome.
+function FotoUsuario({ nome, fotoUrl }: { nome: string; fotoUrl: string | null }) {
   const classe = "h-9 w-9 shrink-0 rounded-full";
 
-  if (semFoto) {
+  if (fotoUrl) {
     return (
-      <span
-        aria-hidden="true"
-        className={`${classe} flex items-center justify-center bg-brand text-xs font-semibold text-white`}
-      >
-        {iniciais(nome) || "?"}
-      </span>
+      // <img> e não next/image: a foto vem de uma rota autenticada e já chega
+      // recortada e reduzida (mesmo motivo do Avatar do perfil).
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={fotoUrl} alt="" className={`${classe} bg-ink-100 object-cover`} />
     );
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src="/api/perfil/foto"
-      alt=""
-      onError={() => setSemFoto(true)}
-      className={`${classe} bg-ink-100 object-cover`}
-    />
+    <span
+      aria-hidden="true"
+      className={`${classe} flex items-center justify-center bg-brand text-xs font-semibold text-white`}
+    >
+      {iniciais(nome) || "?"}
+    </span>
   );
 }
 
 // Avatar que abre um menu com nome, e-mail, links do perfil e "Sair". Fecha ao
 // clicar fora, com Esc (devolvendo o foco ao botão) e ao escolher um item.
-function MenuUsuario({ nome, email }: { nome: string; email: string }) {
+function MenuUsuario({
+  nome,
+  email,
+  fotoUrl,
+}: {
+  nome: string;
+  email: string;
+  fotoUrl: string | null;
+}) {
   const [aberto, setAberto] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
   const botao = useRef<HTMLButtonElement>(null);
@@ -269,7 +309,7 @@ function MenuUsuario({ nome, email }: { nome: string; email: string }) {
         className="flex items-center gap-1.5 rounded-full p-0.5 text-muted transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         <span className="sr-only">Menu da conta</span>
-        <FotoUsuario nome={nome} />
+        <FotoUsuario nome={nome} fotoUrl={fotoUrl} />
         <svg
           viewBox="0 0 20 20"
           fill="currentColor"

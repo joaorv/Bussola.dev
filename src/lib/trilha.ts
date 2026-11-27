@@ -252,8 +252,46 @@ export async function salvarProgressoTopico(
     await prisma.progressoTopico.deleteMany({ where: { userId, roadmapId, topicId } });
   }
 
-  revalidatePath(`/roadmaps/${roadmapId}`);
-  revalidatePath("/perfil");
+  revalidarProgresso(roadmapId);
 
   return { roadmapId, topicId, concluido, concluidoEm };
+}
+
+// Uma etapa tem poucas dezenas de tópicos; o limite só barra abuso.
+const MAX_TOPICOS_POR_VEZ = 200;
+
+// Marca ou desmarca vários tópicos de uma vez (ex.: "concluir etapa"). Retorna
+// false, sem gravar nada, se algum id não pertencer ao roadmap.
+export async function salvarProgressoTopicos(
+  userId: string,
+  roadmapId: string,
+  topicIds: string[],
+  concluido: boolean
+): Promise<boolean> {
+  const ids = [...new Set(topicIds)];
+  if (ids.length === 0 || ids.length > MAX_TOPICOS_POR_VEZ) return false;
+
+  const roadmap = await buscarRoadmap(roadmapId);
+  const validos = new Set(roadmap?.etapas.flatMap((e) => e.topicos.map((t) => t.id)));
+  if (!ids.every((id) => validos.has(id))) return false;
+
+  if (concluido) {
+    // skipDuplicates: quem já estava concluído mantém a data original.
+    await prisma.progressoTopico.createMany({
+      data: ids.map((topicId) => ({ userId, roadmapId, topicId })),
+      skipDuplicates: true,
+    });
+  } else {
+    await prisma.progressoTopico.deleteMany({
+      where: { userId, roadmapId, topicId: { in: ids } },
+    });
+  }
+
+  revalidarProgresso(roadmapId);
+  return true;
+}
+
+function revalidarProgresso(roadmapId: string) {
+  revalidatePath(`/roadmaps/${roadmapId}`);
+  revalidatePath("/perfil");
 }
