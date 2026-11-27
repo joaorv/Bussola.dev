@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { CompassRose } from "./CompassRose";
 import { Countdown } from "./Countdown";
-import { scrollToAnchor } from "@/lib/scroll";
 
-export function Hero() {
+export function Hero({ logado }: { logado: boolean }) {
   return (
     <section className="relative isolate overflow-hidden bg-night text-white">
       {/* profundidade: um clarão atrás da bússola */}
@@ -27,11 +26,10 @@ export function Hero() {
           </p>
 
           <Link
-            href="#lista-de-espera"
-            onClick={(e) => scrollToAnchor(e, "lista-de-espera")}
+            href={logado ? "/roadmaps" : "/cadastro"}
             className="mt-10 inline-flex h-12 items-center justify-center rounded-md bg-accent px-7 text-base font-medium text-white shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover active:bg-accent-active"
           >
-            Entrar na lista de espera
+            {logado ? "Ver roadmaps" : "Criar minha conta"}
           </Link>
 
           <Countdown

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RoadmapsPage() {
-  await requireLeadAccess();
+  await requireLeadAccess("/roadmaps");
   const roadmaps = getRoadmaps();
 
   return (
@@ -20,7 +20,7 @@ export default async function RoadmapsPage() {
       >
         <div className="mx-auto w-full max-w-6xl">
           <p className="text-sm font-semibold uppercase tracking-wider text-accent">
-            Você está na lista de espera
+            Roadmaps
           </p>
           <h1
             id="roadmaps-title"

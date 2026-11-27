@@ -9,7 +9,7 @@ import { PRIVACY_POLICY_HREF, TERMS_OF_USE_HREF } from "@/lib/legal";
 // usuário já está nela; os demais são páginas comuns.
 const FOOTER_LINKS = [
   { href: "/#como-funciona", anchor: "como-funciona", label: "Como funciona" },
-  { href: "/#lista-de-espera", anchor: "lista-de-espera", label: "Lista de espera" },
+  { href: "/cadastro", label: "Criar conta" },
   { href: PRIVACY_POLICY_HREF, label: "Política de Privacidade" },
   { href: TERMS_OF_USE_HREF, label: "Termos de Uso" },
 ];

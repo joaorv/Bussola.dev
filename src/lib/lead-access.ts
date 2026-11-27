@@ -21,12 +21,13 @@ export function setLeadCookie(response: NextResponse) {
   return response;
 }
 
-// Para as páginas de roadmap: libera quem fez o pré-cadastro ou tem conta e
-// está logado; os demais voltam para o formulário.
-export async function requireLeadAccess() {
+// Para as páginas de roadmap: libera quem tem conta e está logado, e também
+// quem entrou na antiga lista de espera (cookie ainda válido). Os demais vão
+// para o cadastro e voltam para `callbackUrl` depois de criar a conta.
+export async function requireLeadAccess(callbackUrl: string) {
   const cookieStore = await cookies();
 
   if (!cookieStore.has(LEAD_COOKIE) && !(await getSession())) {
-    redirect("/#lista-de-espera");
+    redirect(`/cadastro?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 }

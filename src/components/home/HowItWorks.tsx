@@ -202,7 +202,7 @@ export function HowItWorks() {
         </ol>
       </div>
 
-      {/* degradê de saída: escurece de volta para a faixa da lista de espera */}
+      {/* degradê de saída: escurece de volta para a faixa "Começar agora" */}
       <div
         aria-hidden="true"
         className="h-28 bg-linear-to-b from-transparent via-night/40 to-night lg:h-44"

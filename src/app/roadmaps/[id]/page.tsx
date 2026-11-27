@@ -33,8 +33,8 @@ const LEVELS = Object.keys(LEVEL_LABELS) as TopicLevel[];
 export default async function RoadmapPage({
   params,
 }: PageProps<"/roadmaps/[id]">) {
-  await requireLeadAccess();
   const { id } = await params;
+  await requireLeadAccess(`/roadmaps/${id}`);
 
   // Quem tem conta marca o progresso; quem só fez o pré-cadastro vê a trilha
   // sem os checks. Os dados são os mesmos de GET /api/roadmaps/[id]/etapas.
