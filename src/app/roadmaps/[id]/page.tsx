@@ -2,19 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireLeadAccess } from "@/lib/lead-access";
+import { LEVEL_LABELS, getRoadmaps, type TopicLevel } from "@/lib/roadmaps";
 import {
-  LEVEL_LABELS,
-  RESOURCE_LABELS,
-  countTopics,
-  getRoadmap,
-  getRoadmaps,
-  type TopicLevel,
-} from "@/lib/roadmaps";
+  NIVEL_PARA_LEVEL,
+  RECURSO_LABELS,
+  buscarRoadmap,
+  carregarTrilha,
+} from "@/lib/trilha";
 import { LevelBadge } from "@/components/roadmap/LevelBadge";
 import { TopicoCheck } from "@/components/roadmap/TopicoCheck";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { resumirProgresso } from "@/lib/progresso";
 
 export function generateStaticParams() {
   return getRoadmaps().map((roadmap) => ({ id: roadmap.id }));
@@ -24,10 +21,10 @@ export async function generateMetadata({
   params,
 }: PageProps<"/roadmaps/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const roadmap = getRoadmap(id);
+  const roadmap = await buscarRoadmap(id);
 
   return roadmap
-    ? { title: `${roadmap.title} | Bússola.dev`, description: roadmap.description }
+    ? { title: `${roadmap.titulo} | Bússola.dev`, description: roadmap.descricao }
     : {};
 }
 
@@ -39,26 +36,14 @@ export default async function RoadmapPage({
   await requireLeadAccess();
   const { id } = await params;
 
-  const roadmap = getRoadmap(id);
+  // Quem tem conta marca o progresso; quem só fez o pré-cadastro vê a trilha
+  // sem os checks. Os dados são os mesmos de GET /api/roadmaps/[id]/etapas.
+  const userId = (await getSession())?.user?.id ?? null;
+  const trilha = await carregarTrilha(id, userId);
 
-  if (!roadmap) {
+  if (!trilha) {
     notFound();
   }
-
-  // Quem tem conta marca o progresso; quem só fez o pré-cadastro vê a trilha
-  // sem os checks.
-  const userId = (await getSession())?.user?.id;
-  const concluidos = userId
-    ? await prisma.progressoTopico.findMany({
-        where: { userId, roadmapId: roadmap.id },
-        select: { topicId: true, concluidoEm: true },
-      })
-    : [];
-  const feitos = new Set(concluidos.map((c) => c.topicId));
-  const progresso = resumirProgresso(roadmap, concluidos);
-  const etapaCompleta = new Set(
-    progresso.etapas.filter((e) => e.total > 0 && e.concluidos === e.total).map((e) => e.id)
-  );
 
   return (
     <>
@@ -77,11 +62,11 @@ export default async function RoadmapPage({
             id="roadmap-title"
             className="mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-4xl"
           >
-            {roadmap.title}
+            {trilha.titulo}
           </h1>
-          <p className="mt-4 max-w-2xl text-white/70">{roadmap.description}</p>
+          <p className="mt-4 max-w-2xl text-white/70">{trilha.descricao}</p>
           <p className="mt-4 text-sm text-white/50">
-            {roadmap.categories.length} etapas · {countTopics(roadmap)} tópicos
+            {trilha.etapas.length} etapas · {trilha.totalTopicos} tópicos
           </p>
 
           {userId ? (
@@ -89,27 +74,27 @@ export default async function RoadmapPage({
               <div className="flex items-baseline justify-between text-sm">
                 <span className="text-white/70">Seu progresso</span>
                 <span className="tabular-nums text-white">
-                  {progresso.concluidos}/{progresso.total} · {progresso.percentual}%
+                  {trilha.topicosConcluidos}/{trilha.totalTopicos} · {trilha.percentual}%
                 </span>
               </div>
               <div
                 role="progressbar"
                 aria-label="Seu progresso nesta trilha"
                 aria-valuemin={0}
-                aria-valuemax={progresso.total}
-                aria-valuenow={progresso.concluidos}
+                aria-valuemax={trilha.totalTopicos}
+                aria-valuenow={trilha.topicosConcluidos}
                 className="mt-2 h-2 overflow-hidden rounded-full bg-night-line"
               >
                 <div
                   className="h-full rounded-full bg-success"
-                  style={{ width: `${progresso.percentual}%` }}
+                  style={{ width: `${trilha.percentual}%` }}
                 />
               </div>
             </div>
           ) : (
             <p className="mt-6 text-sm text-white/70">
               <Link
-                href={`/login?callbackUrl=${encodeURIComponent(`/roadmaps/${roadmap.id}`)}`}
+                href={`/login?callbackUrl=${encodeURIComponent(`/roadmaps/${trilha.roadmapId}`)}`}
                 className="font-medium text-white underline underline-offset-2 hover:text-accent-hover"
               >
                 Entre na sua conta
@@ -134,16 +119,16 @@ export default async function RoadmapPage({
               Etapas
             </h2>
             <ol className="mt-4 flex flex-col gap-2 text-sm text-muted">
-              {roadmap.categories.map((category) => (
-                <li key={category.id}>
+              {trilha.etapas.map((etapa) => (
+                <li key={etapa.id}>
                   <a
-                    href={`#${category.id}`}
+                    href={`#${etapa.id}`}
                     className="flex items-start justify-between gap-2 transition-colors hover:text-foreground"
                   >
                     <span>
-                      {category.order}. {category.name}
+                      {etapa.ordem}. {etapa.nome}
                     </span>
-                    {etapaCompleta.has(category.id) && (
+                    {etapa.concluida && (
                       <span className="text-success" aria-label="Etapa concluída">
                         ✓
                       </span>
@@ -167,14 +152,14 @@ export default async function RoadmapPage({
         </aside>
 
         <ol className="min-w-0">
-          {roadmap.categories.map((category, index) => (
+          {trilha.etapas.map((etapa, index) => (
             <li
-              key={category.id}
-              id={category.id}
+              key={etapa.id}
+              id={etapa.id}
               className="relative scroll-mt-6 pb-12 pl-12 last:pb-0"
             >
               {/* trilha ligando as etapas */}
-              {index < roadmap.categories.length - 1 ? (
+              {index < trilha.etapas.length - 1 ? (
                 <span
                   aria-hidden="true"
                   className="absolute top-9 bottom-0 left-4 w-px bg-border"
@@ -183,71 +168,73 @@ export default async function RoadmapPage({
               <span
                 aria-hidden="true"
                 className={`absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white ${
-                  etapaCompleta.has(category.id) ? "bg-success" : "bg-brand"
+                  etapa.concluida ? "bg-success" : "bg-brand"
                 }`}
               >
-                {etapaCompleta.has(category.id) ? "✓" : category.order}
+                {etapa.concluida ? "✓" : etapa.ordem}
               </span>
 
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-                  {category.name}
+                  {etapa.nome}
                 </h2>
                 {userId && (
                   <p
                     className={`text-sm tabular-nums ${
-                      etapaCompleta.has(category.id)
+                      etapa.concluida
                         ? "font-medium text-success-active dark:text-success-hover"
                         : "text-muted"
                     }`}
                   >
-                    {etapaCompleta.has(category.id)
+                    {etapa.concluida
                       ? "Etapa concluída"
-                      : `${progresso.etapas[index].concluidos}/${progresso.etapas[index].total} concluídos`}
+                      : `${etapa.topicosConcluidos}/${etapa.totalTopicos} concluídos`}
                   </p>
                 )}
               </div>
 
               <ol className="mt-6 flex flex-col gap-4">
-                {category.topics.map((topic) => (
+                {etapa.topicos.map((topico) => (
                   <li
-                    key={topic.id}
+                    key={topico.id}
                     className={`rounded-lg border bg-surface p-card ${
-                      feitos.has(topic.id) ? "border-success/40" : "border-border"
+                      topico.concluido ? "border-success/40" : "border-border"
                     }`}
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <h3 className="text-base font-semibold text-foreground">
-                        {topic.title}
+                        {topico.titulo}
                       </h3>
                       <div className="flex flex-wrap items-center gap-2">
-                        <LevelBadge level={topic.level} />
+                        <LevelBadge level={NIVEL_PARA_LEVEL[topico.nivel]} />
                         {userId && (
                           <TopicoCheck
-                            roadmapId={roadmap.id}
-                            topicId={topic.id}
-                            titulo={topic.title}
-                            concluido={feitos.has(topic.id)}
+                            roadmapId={trilha.roadmapId}
+                            topicId={topico.id}
+                            titulo={topico.titulo}
+                            concluido={topico.concluido}
                           />
                         )}
                       </div>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-(--color-ink-700)">
-                      {topic.description}
+                      {topico.descricao}
                     </p>
-                    <ul className="mt-4 flex flex-wrap gap-2">
-                      {topic.resources.map((resource) => (
-                        <li
-                          key={resource.name}
-                          className="rounded-md bg-ink-100 px-2 py-1 text-xs text-foreground"
-                        >
-                          <span className="text-muted">
-                            {RESOURCE_LABELS[resource.type]}:
-                          </span>{" "}
-                          {resource.name}
-                        </li>
-                      ))}
-                    </ul>
+                    {topico.recursos.length > 0 && (
+                      <ul className="mt-4 flex flex-wrap gap-2">
+                        {topico.recursos.map((recurso) => (
+                          <li
+                            key={recurso.nome}
+                            className="rounded-md bg-ink-100 px-2 py-1 text-xs text-foreground"
+                          >
+                            <span className="text-muted">
+                              {RECURSO_LABELS[recurso.tipo]}:
+                            </span>{" "}
+                            {recurso.nome}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ol>

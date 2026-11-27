@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getRoadmap } from "@/lib/roadmaps";
+import { topicoExiste } from "@/lib/trilha";
 
 export type ResultadoProgresso = { ok: true } | { ok: false; erro: string };
 
@@ -21,11 +21,7 @@ export async function marcarTopico(
   }
 
   // Os ids vêm do navegador: só aceita tópicos que existem neste roadmap.
-  const existe = getRoadmap(roadmapId)?.categories.some((c) =>
-    c.topics.some((t) => t.id === topicId)
-  );
-
-  if (!existe) {
+  if (!(await topicoExiste(roadmapId, topicId))) {
     return { ok: false, erro: "Tópico não encontrado." };
   }
 
